@@ -52,7 +52,15 @@ mybatis-plus:
       logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
 
 
-
+# 文件路径
+files:
+  upload:
+    # 临时存放路径
+    path: E:/desktop/file
+    ak: 3ZRRSHSVDVJNQB4K9Q2F
+    sk: onWB4AxC1DCHQ74VSRGi6lLsnRfr5CP1ViIZ43ZU
+    endpoint: obs.cn-north-4.myhuaweicloud.com
+    bucketname: speakfreely
 
 
 
