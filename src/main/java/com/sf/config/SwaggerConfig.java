@@ -1,5 +1,6 @@
 package com.sf.config;
 
+import com.github.xiaoymin.knife4j.spring.annotations.EnableKnife4j;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ import springfox.documentation.service.Contact;
  * @date: 2022-05-30 16:18
  */
 @Configuration
+//@EnableKnife4j
 @EnableSwagger2WebMvc
 // 访问路径 http://localhost:9090/doc.html#/home
 public class SwaggerConfig {

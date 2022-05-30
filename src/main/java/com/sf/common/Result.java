@@ -1,5 +1,7 @@
 package com.sf.common;
 
+import io.swagger.annotations.ApiModelProperty;
+
 /**
  * @Description: 接口统一返回
  * @author: leung
@@ -10,14 +12,17 @@ public class Result {
     /**
      * 操作是否成功
      */
+    @ApiModelProperty("状态码")
     private String code;
     /**
      * msg
      */
+    @ApiModelProperty("信息")
     private String msg;
     /**
      * 数据
      */
+    @ApiModelProperty("数据")
     private Object data;
 
     public Result() {
