@@ -2,6 +2,10 @@ server:
   port: 9090
 
 spring:
+  #  swagger3
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
   datasource:
     druid:
       driver-class-name: com.mysql.cj.jdbc.Driver
