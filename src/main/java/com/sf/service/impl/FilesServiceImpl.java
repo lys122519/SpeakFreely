@@ -24,8 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static com.sf.common.StringConst.BASE_URL;
-
 /**
  * <p>
  * 服务实现类
@@ -36,37 +34,25 @@ import static com.sf.common.StringConst.BASE_URL;
  */
 @Service
 public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements IFilesService {
+
     @Value("${files.upload.path}")
     private String fileUploadPath;
 
     @Resource
     private FilesMapper fileMapper;
 
-
     @Override
     public void deleteById(Integer id) {
         fileMapper.deleteById(id);
 
-
-        //未删除的加入缓存
-        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("deleted", 0);
-        //设置缓存
-        List<Files> list = fileMapper.selectList(null);
-        RedisUtils.setRedisCache(StringConst.FILE_KEY, JSONUtil.toJsonStr(list));
-
+        setFilesRedisCache();
     }
 
     @Override
     public void deleteBatchByIds(List<Integer> ids) {
         fileMapper.deleteBatchIds(ids);
 
-        //未删除的加入缓存
-        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("deleted", 0);
-        //设置缓存
-        List<Files> list = fileMapper.selectList(queryWrapper);
-        RedisUtils.setRedisCache(StringConst.FILE_KEY, JSONUtil.toJsonStr(list));
+        setFilesRedisCache();
     }
 
     @Override
@@ -102,7 +88,10 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         queryWrapper.eq("md5", fileMD5);
         List<Files> filesList = fileMapper.selectList(queryWrapper);
 
-        String urlFromSql = filesList.get(0).getUrl();
+        String urlFromSql = null;
+        if (filesList.size() != 0) {
+            urlFromSql = filesList.get(0).getUrl();
+        }
 
 
         //从数据库查不到相同的md5，则上传，否则将已有文件的url其该文件最终url
@@ -112,7 +101,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
             uploadFile.delete();
         } else {
             //无相同md5文件，则上传
-            finalUrl = BASE_URL + fileUUID;
+            finalUrl = StringConst.BASE_URL + fileUUID;
             OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
 
         }
@@ -126,13 +115,19 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         saveFile.setMd5(fileMD5);
         fileMapper.insert(saveFile);
 
-        //设置缓存
-        List<Files> list = fileMapper.selectList(null);
-        RedisUtils.setRedisCache(StringConst.FILE_KEY, JSONUtil.toJsonStr(list));
+        setFilesRedisCache();
 
         return finalUrl;
     }
 
+    /**
+     * 分页查询
+     *
+     * @param pageNum
+     * @param pageSize
+     * @param name
+     * @return
+     */
     @Override
     public IPage<Files> getPage(Integer pageNum, Integer pageSize, String name) {
         QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
@@ -143,5 +138,17 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         IPage<Files> page = new Page<>(pageNum, pageSize);
         fileMapper.selectPage(page, queryWrapper);
         return page;
+    }
+
+    /**
+     * 设置Redis缓存
+     */
+    private void setFilesRedisCache() {
+        //未删除的加入缓存
+        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("deleted", 0);
+        //设置缓存
+        List<Files> list = fileMapper.selectList(queryWrapper);
+        RedisUtils.setRedisCache(StringConst.FILE_KEY, JSONUtil.toJsonStr(list));
     }
 }

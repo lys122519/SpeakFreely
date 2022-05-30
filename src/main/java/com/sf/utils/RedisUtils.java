@@ -1,8 +1,10 @@
 package com.sf.utils;
 
+import com.sf.service.IUserService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 /**
@@ -13,15 +15,25 @@ import javax.annotation.Resource;
 @Component
 public class RedisUtils {
 
+
     @Resource
-    private static StringRedisTemplate stringRedisTemplate;
+    private StringRedisTemplate stringRedisTemplate;
+
+    private static StringRedisTemplate staticStringRedisTemplate;
+
+    @PostConstruct
+    public void setStringRedisTemplate() {
+        staticStringRedisTemplate = stringRedisTemplate;
+    }
+
 
     /**
      * 设置缓存
+     *
      * @param key
      * @param value
      */
     public static void setRedisCache(String key, String value) {
-        stringRedisTemplate.opsForValue().set(key, value);
+        staticStringRedisTemplate.opsForValue().set(key, value);
     }
 }

@@ -7,13 +7,13 @@ import com.sf.common.Result;
 import com.sf.common.StringConst;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.List;
-
+import java.net.URLEncoder;
 
 import com.sf.service.IFilesService;
 import com.sf.entity.Files;
@@ -27,14 +27,14 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
- * 前端控制器
+ *  前端控制器
  * </p>
  *
  * @author leung
  * @since 2022-05-30
  */
 @RestController
-@RequestMapping("/file")
+@RequestMapping("/files")
 @Api(tags = "文件相关接口")
 public class FilesController {
 
@@ -43,7 +43,6 @@ public class FilesController {
 
     @PostMapping
     @ApiOperation(value = "新增/修改接口")
-
     public Result save(@RequestBody Files file) {
         return Result.success(fileService.saveOrUpdate(file));
     }
@@ -71,6 +70,7 @@ public class FilesController {
      * @throws IOException
      */
     @PostMapping("/upload")
+    @ApiOperation(value = "文件上传")
     public Result upload(@RequestParam MultipartFile file) throws IOException {
 
         fileService.uploadFile(file);
@@ -85,6 +85,7 @@ public class FilesController {
      * @throws IOException
      */
     @GetMapping("/{fileUUID}")
+    @ApiOperation(value = "文件下载")
     public void download(@PathVariable String fileUUID, HttpServletResponse response) throws IOException {
         ServletOutputStream outputStream;
         //根据文件唯一标识码获取文件
