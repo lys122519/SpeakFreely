@@ -13,7 +13,7 @@ spring:
       driver-class-name: com.mysql.cj.jdbc.Driver
       url: jdbc:mysql://localhost:3306/speakfreely?serverTimeZone=GMT%2B8
       username: root
-      password: root
+
   redis:
     host: localhost
     port: 6379
