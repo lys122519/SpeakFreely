@@ -30,8 +30,8 @@ public class OBSUtils {
         staticObsClient = obsClient;
     }
 
-    @Value("${files.upload.bucketname}")
-    private static String bucketName;
+
+    private static final String BUCKET_NAME = "speakfreely";
 
     /**
      * OBS 上传文件
@@ -45,7 +45,7 @@ public class OBSUtils {
         try {
             //  为待上传的本地文件路径，需要指定到具体的文件名
             PutObjectRequest request = new PutObjectRequest();
-            request.setBucketName("file-but");
+            request.setBucketName(BUCKET_NAME);
             request.setObjectKey(fileName);
             request.setFile(new File(filePath));
             staticObsClient.putObject(request);
