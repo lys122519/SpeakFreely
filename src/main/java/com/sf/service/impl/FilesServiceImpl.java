@@ -119,6 +119,10 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         saveFile.setMd5(fileMD5);
         fileMapper.insert(saveFile);
 
+        //存储完后删除文件
+        uploadFile.delete();
+
+
         setFilesRedisCache();
 
         return finalUrl;
