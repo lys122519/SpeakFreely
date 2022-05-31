@@ -11,7 +11,7 @@
  Target Server Version : 80028
  File Encoding         : 65001
 
- Date: 30/05/2022 17:13:06
+ Date: 31/05/2022 10:00:43
 */
 
 SET NAMES utf8mb4;
@@ -27,7 +27,7 @@ CREATE TABLE `tb_article`  (
   `name` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '标题',
   `content` text CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '内容',
   `time` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0) COMMENT '创建时间',
-  `deteled` tinyint(1) NULL DEFAULT 0 COMMENT '是否删除',
+  `deleted` tinyint(1) NULL DEFAULT 0 COMMENT '是否删除',
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
 
@@ -56,10 +56,10 @@ CREATE TABLE `tb_comment`  (
 -- ----------------------------
 
 -- ----------------------------
--- Table structure for tb_file
+-- Table structure for tb_files
 -- ----------------------------
-DROP TABLE IF EXISTS `tb_file`;
-CREATE TABLE `tb_file`  (
+DROP TABLE IF EXISTS `tb_files`;
+CREATE TABLE `tb_files`  (
   `id` int(0) NOT NULL AUTO_INCREMENT COMMENT 'id',
   `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '文件名称',
   `type` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL COMMENT '文件类型',
@@ -69,11 +69,12 @@ CREATE TABLE `tb_file`  (
   `deleted` tinyint(1) NULL DEFAULT 0 COMMENT '是否已删除',
   `enabled` tinyint(1) NULL DEFAULT 1 COMMENT '是否禁用',
   PRIMARY KEY (`id`, `md5`) USING BTREE
-) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of tb_file
+-- Records of tb_files
 -- ----------------------------
+INSERT INTO `tb_files` VALUES (1, '6884465.jpg', 'jpg', 277, 'https://file-but.obs.cn-north-4.myhuaweicloud.com/49e71286dabe412da8400d3d8e8accbe.jpg', 'c2fd09f59fa12277adfa05a937815eb3', 0, 1);
 
 -- ----------------------------
 -- Table structure for tb_report
@@ -158,6 +159,6 @@ CREATE TABLE `tb_user`  (
 -- ----------------------------
 -- Records of tb_user
 -- ----------------------------
-INSERT INTO `tb_user` VALUES (1, 'lys122519', 'lys122519', 'lys122519', '514955048@qq.com', '18064373749', '陕西西安', '2022-05-30 16:10:17', NULL, 'ROLE_ADMIN');
+INSERT INTO `tb_user` VALUES (1, 'admin', 'admin', 'lys122519', '514955048@qq.com', '18064373749', '陕西西安', '2022-05-30 16:10:17', NULL, 'ROLE_ADMIN');
 
 SET FOREIGN_KEY_CHECKS = 1;
