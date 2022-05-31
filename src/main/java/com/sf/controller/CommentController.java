@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +33,8 @@ import javax.annotation.Resource;
 @RequestMapping("/comment")
 @Api(tags = "评论相关接口")
 public class CommentController {
+    private static final Logger log = LoggerFactory.getLogger(CommentController.class);
+
     @Resource
     private ICommentService commentService;
 

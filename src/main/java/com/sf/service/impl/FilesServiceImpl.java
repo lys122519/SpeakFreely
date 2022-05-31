@@ -17,6 +17,8 @@ import com.sf.service.IFilesService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.OBSUtils;
 import com.sf.utils.RedisUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -36,6 +38,7 @@ import java.util.List;
  */
 @Service
 public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements IFilesService {
+    private static final Logger log = LoggerFactory.getLogger(FilesServiceImpl.class);
 
     @Value("${files.upload.path}")
     private String fileUploadPath;
@@ -101,6 +104,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
             try {
                 OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
             } catch (Exception e) {
+                log.warn("上传文件失败");
                 throw new ServiceException(Constants.CODE_600, "上传失败，请重试");
             }
 

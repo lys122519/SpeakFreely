@@ -6,6 +6,8 @@ import com.sf.mapper.CommentMapper;
 import com.sf.service.ICommentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.TokenUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements ICommentService {
+    private static final Logger log = LoggerFactory.getLogger(CommentServiceImpl.class);
+
     @Resource
     private CommentMapper commentMapper;
 

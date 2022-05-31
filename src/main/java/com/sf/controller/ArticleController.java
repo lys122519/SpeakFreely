@@ -6,6 +6,8 @@ import com.sf.common.Result;
 import com.sf.utils.TokenUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +31,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/article")
 @Api(tags = "文章相关接口")
 public class ArticleController {
+    private static final Logger log = LoggerFactory.getLogger(ArticleController.class);
+
     @Autowired
     private IArticleService articleService;
 
