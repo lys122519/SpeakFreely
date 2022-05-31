@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.entity.Article;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 /**
  * <p>
@@ -22,5 +23,5 @@ public interface ArticleMapper extends BaseMapper<Article> {
      * @param name
      * @return
      */
-    Page<Article> findPage(Page<Article> page, String name);
+    Page<Article> findPage(Page<Article> page,@Param("name") String name);
 }
