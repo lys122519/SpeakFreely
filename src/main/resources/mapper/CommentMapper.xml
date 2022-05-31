@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sf.mapper.CommentMapper">
+
+    <select id="findCommentDetail" resultType="com.sf.entity.Comment">
+        select c.*, u.nickname, u.avatar_url
+        from tb_comment as c
+                 left join tb_user as u
+                           on c.user_id = u.id
+        where c.article_id = #{articleId} and deleted = 0
+        order by id desc
+
+
+    </select>
+</mapper>
