@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.obs.services.model.PutObjectResult;
 import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.entity.Files;
@@ -92,17 +93,21 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         //根据md5查询是否有重复文件
         String urlFromSql = selectFileByMD5(fileMD5);
 
+        // 存储数据库的file
+        Files saveFile = new Files();
+
         //从数据库查不到相同的md5，则上传，否则将已有文件的url其该文件最终url
         if (urlFromSql != null) {
-            finalUrl += urlFromSql;
+            saveFile.setUrl(urlFromSql);
             //相同md5的文件存在，删除已保存文件
             uploadFile.delete();
         } else {
             //无相同md5文件，则上传
-            finalUrl = StringConst.BASE_URL + fileUUID;
-
             try {
-                OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
+                PutObjectResult result = OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
+                assert result != null;
+                finalUrl = result.getObjectUrl();
+                saveFile.setUrl(finalUrl);
             } catch (Exception e) {
                 log.warn("上传文件失败");
                 throw new ServiceException(Constants.CODE_600, "上传失败，请重试");
@@ -110,13 +115,11 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
         }
 
-        // 存储数据库
-        Files saveFile = new Files();
         saveFile.setName(originalFilename);
         saveFile.setType(type);
         saveFile.setSize(size / 1024);
-        saveFile.setUrl(finalUrl);
         saveFile.setMd5(fileMD5);
+
         fileMapper.insert(saveFile);
 
         //存储完后删除文件
@@ -162,6 +165,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
     /**
      * 根据文件md5查询文件
+     *
      * @param md5
      * @return
      */

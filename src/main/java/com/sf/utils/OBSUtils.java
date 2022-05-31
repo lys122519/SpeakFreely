@@ -40,7 +40,7 @@ public class OBSUtils {
      * @param filePath
      * @throws IOException
      */
-    public static void uploadFile(String fileName, String filePath) throws IOException {
+    public static PutObjectResult uploadFile(String fileName, String filePath) throws IOException {
 
         try {
             //  为待上传的本地文件路径，需要指定到具体的文件名
@@ -48,9 +48,11 @@ public class OBSUtils {
             request.setBucketName(BUCKET_NAME);
             request.setObjectKey(fileName);
             request.setFile(new File(filePath));
-            staticObsClient.putObject(request);
+            PutObjectResult putObjectResult = staticObsClient.putObject(request);
+            return putObjectResult;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
 
 
