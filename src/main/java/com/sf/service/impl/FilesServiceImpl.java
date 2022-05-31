@@ -85,16 +85,9 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         //获取文件md5
         String fileMD5 = SecureUtil.md5(uploadFile);
 
+
         //根据md5查询是否有重复文件
-        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("md5", fileMD5);
-        List<Files> filesList = fileMapper.selectList(queryWrapper);
-
-        String urlFromSql = null;
-        if (filesList.size() != 0) {
-            urlFromSql = filesList.get(0).getUrl();
-        }
-
+        String urlFromSql = selectFileByMD5(fileMD5);
 
         //从数据库查不到相同的md5，则上传，否则将已有文件的url其该文件最终url
         if (urlFromSql != null) {
@@ -157,5 +150,19 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         //设置缓存
         List<Files> list = fileMapper.selectList(queryWrapper);
         RedisUtils.setRedisCache(StringConst.FILE_KEY, JSONUtil.toJsonStr(list));
+    }
+
+    /**
+     * 根据文件md5查询文件
+     * @param md5
+     * @return
+     */
+    private String selectFileByMD5(String md5) {
+        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("md5", md5);
+        List<Files> filesList = fileMapper.selectList(queryWrapper);
+        return filesList.size() == 0 ? null : filesList.get(0).getUrl();
+
+
     }
 }
