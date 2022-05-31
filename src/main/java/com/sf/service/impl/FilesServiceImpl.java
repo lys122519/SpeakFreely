@@ -8,8 +8,10 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.entity.Files;
+import com.sf.exception.ServiceException;
 import com.sf.mapper.FilesMapper;
 import com.sf.service.IFilesService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -102,7 +104,12 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         } else {
             //无相同md5文件，则上传
             finalUrl = StringConst.BASE_URL + fileUUID;
-            OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
+
+            try {
+                OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
+            } catch (Exception e) {
+                throw new ServiceException(Constants.CODE_600, "上传失败，请重试");
+            }
 
         }
 
