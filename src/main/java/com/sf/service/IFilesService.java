@@ -45,4 +45,10 @@ public interface IFilesService extends IService<Files> {
      * @return
      */
     IPage<Files> getPage(Integer pageNum, Integer pageSize, String name);
+
+    /**
+     * 查找所有文件
+     * @return
+     */
+    List<Files>  findAllFile();
 }

@@ -27,6 +27,7 @@ public class CorsConfig {
         // 1 设置访问源地址
         corsConfiguration.addAllowedOrigin("http://localhost:8080");
         corsConfiguration.addAllowedOrigin("http://localhost:8082");
+        corsConfiguration.addAllowedOrigin("http://localhost:3000");
         // 2 设置访问源请求头
         corsConfiguration.addAllowedHeader("*");
         // 3 设置访问源请求方法

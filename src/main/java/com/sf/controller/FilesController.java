@@ -1,11 +1,13 @@
 package com.sf.controller;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Constants;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
+import com.sf.utils.OBSUtils;
 import io.swagger.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +47,7 @@ public class FilesController {
     @Resource
     private IFilesService fileService;
 
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "删除成功"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
+
     @ApiOperation(value = "新增/修改接口")
     @PostMapping
     public Result save(@RequestBody Files file) {
@@ -56,10 +55,6 @@ public class FilesController {
     }
 
 
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "删除成功"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
     @ApiOperation(value = "根据id删除")
     @DeleteMapping("/{fileId}")
     public Result delete(@ApiParam(name = "fileId", value = "删除id", required = true) @PathVariable Integer fileId) {
@@ -68,10 +63,7 @@ public class FilesController {
         return Result.success();
     }
 
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "删除成功"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
+
     @ApiOperation(value = "批量删除")
     @PostMapping("/del/batch")
     public Result deleteBatch(@ApiParam(name = "fileIdList", value = "删除ids", required = true) @RequestBody List<Integer> fileIdList) {
@@ -86,11 +78,6 @@ public class FilesController {
      * @return
      * @throws IOException
      */
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "上传成功"),
-            @ApiResponse(code = 600, message = "上传至OBS失败"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
     @ApiOperation(value = "文件上传")
     @PostMapping("/upload")
     public Result upload(@RequestParam MultipartFile file) throws IOException {
@@ -108,48 +95,49 @@ public class FilesController {
      */
 
     @ApiOperation(value = "文件下载")
-    @GetMapping("/{fileUUID}")
+    @GetMapping("/download/{fileUUID}")
     public void download(@ApiParam(name = "fileUUID", value = "file的名称", required = true) @PathVariable String fileUUID, HttpServletResponse response) throws IOException {
-        ServletOutputStream outputStream;
+        ServletOutputStream outputStream = response.getOutputStream();
         //根据文件唯一标识码获取文件
-        File uploadFile = new File(StringConst.BASE_URL + fileUUID);
+        //File uploadFile = new File(StringConst.BASE_URL + fileUUID);
 
+        String fileUrl = StringConst.BASE_URL + fileUUID;
         response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileUUID, "UTF-8"));
         response.setContentType("application/octet-stream");
 
-        //通过文件路径读取文件字节流
-        byte[] bytes = FileUtil.readBytes(uploadFile);
-        //通过输出流返回文件
-        outputStream = response.getOutputStream();
-        outputStream.write(bytes);
-        outputStream.flush();
-        outputStream.close();
+        try {
+            ////通过文件路径读取文件字节流
+            //byte[] bytes = FileUtil.readBytes(uploadFile);
+            ////通过输出流返回文件
+            //outputStream.write(bytes);
+            //outputStream.flush();
+            //
+
+            OBSUtils.downloadFile(fileUrl);
+        } catch (IORuntimeException e) {
+            log.warn("没有找到文件");
+
+        } finally {
+            assert outputStream != null;
+            outputStream.close();
+        }
+
     }
 
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "查找成功"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
     @ApiOperation(value = "根据id查找一个")
     @GetMapping("/{id}")
     public Result findOne(@ApiParam(name = "id", value = "文件id", required = true) @PathVariable Integer id) {
         return Result.success(fileService.getById(id));
     }
 
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "查找成功"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
+
     @ApiOperation(value = "查找所有")
     @GetMapping
     public Result findAll() {
-        return Result.success(fileService.list());
+        return Result.success(fileService.findAllFile());
     }
 
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "查找成功"),
-            @ApiResponse(code = 401, message = "权限不足")
-    })
+
     @ApiOperation(value = "分页查找")
     @GetMapping("/page")
     public Result findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,

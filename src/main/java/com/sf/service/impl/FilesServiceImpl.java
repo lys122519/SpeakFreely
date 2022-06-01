@@ -1,6 +1,7 @@
 package com.sf.service.impl;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
@@ -10,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.obs.services.model.PutObjectResult;
 import com.sf.common.Constants;
+import com.sf.common.Result;
 import com.sf.common.StringConst;
 import com.sf.entity.Files;
 import com.sf.exception.ServiceException;
@@ -21,6 +23,7 @@ import com.sf.utils.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -46,6 +49,9 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
     @Resource
     private FilesMapper fileMapper;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public void deleteById(Integer id) {
@@ -149,6 +155,33 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         IPage<Files> page = new Page<>(pageNum, pageSize);
         fileMapper.selectPage(page, queryWrapper);
         return page;
+    }
+
+    /**
+     * 查找所有文件
+     *
+     * @return
+     */
+    @Override
+    public List<Files> findAllFile() {
+        //先从缓冲获取数据
+        String jsonStr = stringRedisTemplate.opsForValue().get(StringConst.FILE_KEY);
+
+        List<Files> files;
+        if (StrUtil.isBlank(jsonStr)) {
+            //没有查询到json
+            //从数据库取出数据
+            files = fileMapper.selectList(null);
+            //将数据缓存到redis
+            stringRedisTemplate.opsForValue().set(StringConst.FILE_KEY, JSONUtil.toJsonStr(files));
+        } else {
+            //从redis中获取数据
+            files = JSONUtil.toBean(jsonStr, new TypeReference<List<Files>>() {
+            }, true);
+        }
+
+
+        return files;
     }
 
     /**

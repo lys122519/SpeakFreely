@@ -9,8 +9,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @Description:
@@ -56,6 +58,20 @@ public class OBSUtils {
         }
 
 
+    }
+
+    public static ByteArrayOutputStream downloadFile(String fileUrl) throws IOException {
+        InputStream input = staticObsClient.getObject(BUCKET_NAME, fileUrl).getObjectContent();
+        byte[] b = new byte[1024];
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        int len;
+        while ((len = input.read(b)) != -1) {
+            bos.write(b, 0, len);
+        }
+
+        bos.close();
+        input.close();
+        return bos;
     }
 
 
