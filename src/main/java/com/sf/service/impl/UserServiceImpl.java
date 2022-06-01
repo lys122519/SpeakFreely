@@ -2,7 +2,9 @@ package com.sf.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.sf.common.Constants;
@@ -14,6 +16,7 @@ import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.TokenUtils;
+import io.swagger.annotations.ApiModelProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -22,6 +25,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -56,7 +61,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
         if (user != null && password.equals(user.getPassword())) { // 用户存在且密码一致
             UserDTO loginUser = new UserDTO();
-            BeanUtil.copyProperties(user, loginUser, true); // 完善返回对象属性
+            // 通过浅拷贝设置用户信息,忽略空值
+            BeanUtil.copyProperties(user, loginUser, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
 
             return setToken(loginUser); // 返回设置token后的用户对象
         } else { // 用户提交信息不匹配
@@ -66,7 +72,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public UserDTO userRegister(UserDTO userDTO) {
-        return null;
+        String email = userDTO.getEmail();
+        if (!checkEmail(email)) { // 先检验邮箱格式
+            throw new ServiceException(Constants.CODE_400, "邮箱格式错误"); // 格式不正确时抛出异常
+        }
+        String codeFromRedis = stringRedisTemplate.opsForValue().get(StringConst.CODE_EMAIL + email);
+        if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
+            throw new ServiceException(Constants.CODE_600, "请先获取验证码");
+        } else {
+            if (userDTO.getCode().equals(codeFromRedis)) {
+                if (checkUser(StringConst.USER_REGISTER, "username", userDTO.getUsername()) != null) {
+                    throw new ServiceException(Constants.CODE_600, "用户名已被注册");
+                } else if (checkUser(StringConst.USER_REGISTER, "email", userDTO.getEmail()) != null) {
+                    throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
+                }
+                User user = new User(); // 实例化一个新用户对象
+                // 通过浅拷贝设置新用户信息,忽略空值
+                BeanUtil.copyProperties(userDTO, user, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
+                userMapper.insert(user); // 向数据库插入新用户信息
+                // 修改成功，删除redis缓存中对应的验证码信息
+                stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+
+                return setToken(userDTO);// 更新token并返回
+            } else {
+                throw new ServiceException(Constants.CODE_600, "验证码不匹配");
+            }
+        }
     }
 
     @Override
@@ -81,12 +112,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else {
             if (userDTO.getCode().equals(codeFromRedis)) {
                 User user = checkUser(StringConst.INFO_MODIFY, "email", email); // 信息修改操作
-                BeanUtil.copyProperties(userDTO, user, true); // 通过浅拷贝更新对应用户信息
-                userMapper.updateById(user); // 将更新同步到数据库
-                // 修改成功，删除redis缓存中对应的验证码信息
-                stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+                if (!user.getUsername().equals(userDTO.getUsername())) {
+                    throw new ServiceException(Constants.CODE_600, "用户名一经注册不支持修改");
+                } else {
+                    // 通过浅拷贝更新用户信息,忽略空值
+                    BeanUtil.copyProperties(userDTO, user, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
+                    userMapper.updateById(user); // 将更新同步到数据库
+                    // 修改成功，删除redis缓存中对应的验证码信息
+                    stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
 
-                return setToken(userDTO);// 更新token并返回
+                    return setToken(userDTO);// 更新token并返回
+                }
             } else {
                 throw new ServiceException(Constants.CODE_600, "验证码不匹配");
             }
@@ -141,12 +177,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     /*根据操作标识及邮箱返回邮件标题*/
     public String getEmailTitle(String action, String email) {
         if (action.equals("emailRegister")) { // 注册邮件操作
-            if (checkUser("sendEmail", "email", email) == null) { // 用户为空才可创建邮件
+            if (checkUser(StringConst.SEND_EMAIL, "email", email) == null) { // 用户为空才可创建邮件
                 return "用户注册验证码";
             } else { // 注册操作用户已存在则抛出异常
                 throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
             }
-        } else if (checkUser("sendEmail", "email", email) != null) { // 其他操作需判断用户是否存在
+        } else if (checkUser(StringConst.SEND_EMAIL, "email", email) != null) { // 其他操作需判断用户是否存在
             if (action.equals("emailPwdReset")) { // 重置密码邮件
                 return "密码重置验证码";
             } else if (action.equals("emailInfoModify")) { // 信息修改邮件
@@ -208,5 +244,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             default:
                 return null;
         }
+    }
+    /*用户属性拷贝，UserDTO ==> User*/
+    public User updateUser(UserDTO userDTO,User user){
+        //username,password,nickname,email,phone,address,createTime,avatarUrl,role;
+        // 遍历输出属性
+        Field[] userDtoFields =  userDTO.getClass().getDeclaredFields();
+        Field[] userFields =  userDTO.getClass().getDeclaredFields();
+        for( int i = 0; i < userDtoFields.length; i++){
+            Field f = userDtoFields[i];
+            String key = userDtoFields[i].getName();
+            if(!key.equals("id")) {
+                try {
+                    String value = String.valueOf(userFields[i].get(userDTO));
+                } catch (IllegalAccessException ignored) {
+
+                }
+
+            }
+        }
+        return user;
     }
 }
