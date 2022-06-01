@@ -54,6 +54,12 @@ public interface IFilesService extends IService<Files> {
      */
     List<Files>  findAllFile();
 
+    /**
+     * 下载单文件
+     * @param fileId
+     * @param outputStream
+     * @return
+     */
     byte[] downloadFile(Integer fileId, ServletOutputStream outputStream);
 
 }

@@ -79,10 +79,10 @@ public class FilesController {
      */
     @ApiOperation(value = "文件上传")
     @PostMapping("/upload")
-    public Result<Void> upload(@RequestParam MultipartFile file) throws IOException {
+    public Result<String> upload(@RequestParam MultipartFile file) throws IOException {
 
-        fileService.uploadFile(file);
-        return Result.success();
+
+        return Result.success(fileService.uploadFile(file));
     }
 
     /**
@@ -129,7 +129,7 @@ public class FilesController {
     @GetMapping("/page")
     public Result<IPage<Files>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
                                          @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                         @ApiParam(name = "fileName", value = "文件名称", required = true) @RequestParam(defaultValue = "") String fileName
+                                         @ApiParam(name = "fileName", value = "文件名称") @RequestParam(defaultValue = "") String fileName
     ) {
         IPage<Files> page = fileService.getPage(pageNum, pageSize, fileName);
         if (pageNum > page.getPages()) {

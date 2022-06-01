@@ -65,11 +65,18 @@ public class OBSUtils {
 
     }
 
-    public static ByteArrayOutputStream downloadFile(String fileUrl) throws IOException {
+    /**
+     * OBS 下载文件
+     * @param fileFakeName
+     * @return
+     * @throws IOException
+     */
+    public static ByteArrayOutputStream downloadFile(String fileFakeName) throws IOException {
         InputStream input = null;
         ByteArrayOutputStream bos = null;
         try {
-            input = staticObsClient.getObject(BUCKET_NAME, fileUrl).getObjectContent();
+
+            input = staticObsClient.getObject(BUCKET_NAME, fileFakeName).getObjectContent();
             byte[] b = new byte[1024];
             bos = new ByteArrayOutputStream();
             int len;
@@ -79,8 +86,6 @@ public class OBSUtils {
         }catch(ObsException ex){
             log.warn(ex.getErrorMessage());
         }
-
-
         assert bos != null;
         bos.close();
         input.close();
