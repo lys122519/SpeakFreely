@@ -4,7 +4,6 @@ package com.sf.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.sf.common.Constants;
@@ -16,7 +15,6 @@ import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.TokenUtils;
-import io.swagger.annotations.ApiModelProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -26,7 +24,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -111,12 +112,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             throw new ServiceException(Constants.CODE_600, "请先获取验证码");
         } else {
             if (userDTO.getCode().equals(codeFromRedis)) {
-                User user = checkUser(StringConst.INFO_MODIFY, "email", email); // 信息修改操作
-                if (!user.getUsername().equals(userDTO.getUsername())) {
+                Integer currentUserId = Objects.requireNonNull(TokenUtils.getCurrentUser()).getId();
+
+//                User user = checkUser(StringConst.INFO_MODIFY, "email", email); // 信息修改操作
+//                if (!user.getUsername().equals(userDTO.getUsername())) {
+//                    throw new ServiceException(Constants.CODE_600, "用户名一经注册不支持修改");
+//                }
+                if (userDTO.getUsername() != null) {
                     throw new ServiceException(Constants.CODE_600, "用户名一经注册不支持修改");
                 } else {
                     // 通过浅拷贝更新用户信息,忽略空值
-                    BeanUtil.copyProperties(userDTO, user, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
+//                    copyByName(userDTO, user);
+                    User user = new User();
+                    user.setId(currentUserId);
                     userMapper.updateById(user); // 将更新同步到数据库
                     // 修改成功，删除redis缓存中对应的验证码信息
                     stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
@@ -245,24 +253,54 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 return null;
         }
     }
+
     /*用户属性拷贝，UserDTO ==> User*/
-    public User updateUser(UserDTO userDTO,User user){
-        //username,password,nickname,email,phone,address,createTime,avatarUrl,role;
-        // 遍历输出属性
-        Field[] userDtoFields =  userDTO.getClass().getDeclaredFields();
-        Field[] userFields =  userDTO.getClass().getDeclaredFields();
-        for( int i = 0; i < userDtoFields.length; i++){
-            Field f = userDtoFields[i];
-            String key = userDtoFields[i].getName();
-            if(!key.equals("id")) {
-                try {
-                    String value = String.valueOf(userFields[i].get(userDTO));
-                } catch (IllegalAccessException ignored) {
-
-                }
-
-            }
+    public static void copyByName(Object src, Object target) {
+        if (src == null || target == null) {
+            return;
         }
-        return user;
+        try {
+            Map<String, Field> srcFieldMap = getAssignableFieldsMap(src);
+            Map<String, Field> targetFieldMap = getAssignableFieldsMap(target);
+            for (String srcFieldName : srcFieldMap.keySet()) {
+                Field srcField = srcFieldMap.get(srcFieldName);
+                if (srcField == null) {
+                    continue;
+                }
+                // 变量名需要相同
+                if (!targetFieldMap.containsKey(srcFieldName)) {
+                    continue;
+                }
+                Field targetField = targetFieldMap.get(srcFieldName);
+                if (targetField == null) {
+                    continue;
+                }
+                // 类型需要相同
+                if (!srcField.getType().equals(targetField.getType())) {
+                    continue;
+                }
+                targetField.set(target, srcField.get(src));
+            }
+        } catch (Exception e) {
+            // 异常
+        }
     }
+
+    private static Map<String, Field> getAssignableFieldsMap(Object obj) {
+        if (obj == null) {
+            return new HashMap<String, Field>();
+        }
+        Map<String, Field> fieldMap = new HashMap<String, Field>();
+        for (Field field : obj.getClass().getDeclaredFields()) {
+            // 过滤不需要拷贝的属性
+            if (Modifier.isStatic(field.getModifiers())
+                    || Modifier.isFinal(field.getModifiers())) {
+                continue;
+            }
+            field.setAccessible(true);
+            fieldMap.put(field.getName(), field);
+        }
+        return fieldMap;
+    }
+
 }
