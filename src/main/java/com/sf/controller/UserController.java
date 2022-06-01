@@ -1,12 +1,11 @@
 package com.sf.controller;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
+import com.sf.config.AuthAccess;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
-import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,6 +13,8 @@ import java.util.List;
 
 import com.sf.service.IUserService;
 import com.sf.entity.User;
+import com.sf.entity.dto.UserDTO;
+import com.sf.common.Constants;
 
 import org.springframework.web.bind.annotation.RestController;
 
@@ -72,5 +73,64 @@ public class UserController {
     public Result findPage(@RequestParam Integer pageNum,
                            @RequestParam Integer pageSize) {
         return Result.success(userService.page(new Page<>(pageNum, pageSize)));
+    }
+
+    @ApiOperation(value = "用户登录", notes = "用户名或邮箱配合密码登录", httpMethod = "POST")
+    @PostMapping("/login")
+    public Result userLogin(@RequestBody UserDTO userDTO) {
+        if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getPassword())) {
+            return Result.success(userService.userLogin(userDTO.getUsername(), userDTO.getPassword()));
+        } else {
+            return Result.error(Constants.CODE_400, "参数异常!");
+        }
+    }
+
+    @ApiOperation(value = "用户忘记密码", notes = "用于在登录忘记密码时进行密码重置", httpMethod = "POST")
+    @PostMapping("/pwdReset")
+    public Result userPwdReset(@RequestBody UserDTO userDTO) {
+        if (StrUtil.isNotBlank(userDTO.getEmail()) && StrUtil.isNotBlank(userDTO.getPassword()) &&
+                StrUtil.isNotBlank(userDTO.getConfirmPwd()) && StrUtil.isNotBlank(userDTO.getCode())) {
+            if(userDTO.getPassword().equals(userDTO.getConfirmPwd())){
+                userService.userPwdReset(userDTO.getEmail(),userDTO.getPassword(),userDTO.getCode());
+                return Result.success("密码重置成功");
+            }else {
+                return Result.error(Constants.CODE_400, "两次密码输入不一致!");
+            }
+        } else {
+            return Result.error(Constants.CODE_400, "参数异常!");
+        }
+    }
+
+    @ApiOperation(value = "用户信息修改", notes = "用户个人中心修改基本信息", httpMethod = "POST")
+    @PostMapping("/infoModify")
+    public Result userInfoModify(@RequestBody UserDTO userDTO) {
+        if (StrUtil.isNotBlank(userDTO.getEmail()) && StrUtil.isNotBlank(userDTO.getCode())) {
+            return Result.success(userService.userInfoModify(userDTO));
+        } else {
+            return Result.error(Constants.CODE_400, "参数异常!");
+        }
+    }
+
+    @ApiOperation(value = "用户注册", notes = "新用户注册", httpMethod = "POST")
+    @PostMapping("/register")
+    public Result userRegister(@RequestBody UserDTO userDTO) {
+        if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getEmail()) &&
+                StrUtil.isNotBlank(userDTO.getPassword()) && StrUtil.isNotBlank(userDTO.getCode())) {
+            return Result.success(userService.userRegister(userDTO));
+        } else {
+            return Result.error(Constants.CODE_400, "参数异常!");
+        }
+    }
+
+    @AuthAccess
+    @ApiOperation(value = "发送邮箱验证码", notes = "action:具体操作，例如emailRegister(注册邮件);email为目标邮箱", httpMethod = "POST")
+    @PostMapping("/emailCode/{action}/{email}")
+    public Result sendEmailCode(@PathVariable String action, @PathVariable String email) {
+        if (StrUtil.isNotBlank(action) && StrUtil.isNotBlank(email)) { // 检验参数是否均不为空
+            userService.sendEmailCode(action, email); // 调用邮箱验证码发送接口发送验证码
+            return Result.success("验证码发送成功");
+        } else { // 参数异常处理
+            return Result.error(Constants.CODE_400, "参数异常!");
+        }
     }
 }
