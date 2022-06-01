@@ -8,6 +8,7 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 
 import com.sf.common.Constants;
+import com.sf.common.StringConst;
 import com.sf.config.AuthAccess;
 import com.sf.entity.User;
 import com.sf.exception.ServiceException;
@@ -15,6 +16,7 @@ import com.sf.service.IUserService;
 import org.omg.CORBA.StringSeqHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -33,6 +35,9 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     @Resource
     private IUserService userService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -62,28 +67,43 @@ public class JwtInterceptor implements HandlerInterceptor {
         }
 
         // 获取 token 中的 user id
-        String userId;
-        try {
-            userId = JWT.decode(token).getAudience().get(0);
-        } catch (JWTDecodeException j) {
-            throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
-        }
+        //String userId;
+        //try {
+        //    userId = JWT.decode(token).getAudience().get(0);
+        //} catch (JWTDecodeException j) {
+        //    throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
+        //}
 
 
         //可以将token放在redis中 避免去数据库查询用户
-        User user = userService.getById(userId);
+        //User user = userService.getById(userId);
+
         //if (user == null) {
         //    throw new ServiceException(Constants.CODE_401, "用户不存在，请重新登录");
         //}
 
-        // 用户密码加签 验证 token
-        JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
-        try {
-            // 验证token
-            jwtVerifier.verify(token);
-        } catch (JWTVerificationException e) {
+        //以TOKEN_PREFIX+token取值，判断TOKEN是否合法
+        String tFromRedis = stringRedisTemplate.opsForValue().get(StringConst.TOKEN_PREFIX + token);
+        if (tFromRedis != null) {
+            String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
+            if (token.equals(tokenFromRedis)) {
+                return true;
+            }
+        } else {
             throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
         }
+
+
+        // 用户密码加签 验证 token
+        //JWTVerifier jwtVerifier = JWT.require(Algorithm.HMAC256(user.getPassword())).build();
+        //try {
+        //    // 验证token
+        //    jwtVerifier.verify(token);
+        //} catch (JWTVerificationException e) {
+        //    throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
+        //}
         return true;
+
+
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.net.URLEncoder;
 
@@ -78,50 +79,35 @@ public class FilesController {
      */
     @ApiOperation(value = "文件上传")
     @PostMapping("/upload")
-    public Result<Void> upload(@RequestParam MultipartFile file) throws IOException {
+    public Result<String> upload(@RequestParam MultipartFile file) throws IOException {
 
-        fileService.uploadFile(file);
-        return Result.success();
+
+        return Result.success(fileService.uploadFile(file));
     }
 
     /**
      * 下载文件
      *
-     * @param fileUUID
+     * @param fileId
      * @param response
      * @throws IOException
      */
 
     @ApiOperation(value = "文件下载")
-    @GetMapping("/download/{fileUUID}")
-    public void download(@ApiParam(name = "fileUUID", value = "file的名称", required = true) @PathVariable String fileUUID, HttpServletResponse response) throws IOException {
+    @GetMapping("/download/{fileId}")
+    public void download(@ApiParam(name = "fileId", value = "file的id", required = true) @PathVariable Integer fileId, HttpServletResponse response) throws IOException {
         ServletOutputStream outputStream = response.getOutputStream();
-        //根据文件唯一标识码获取文件
-        //File uploadFile = new File(StringConst.BASE_URL + fileUUID);
 
-        //String fileUrl = StringConst.BASE_URL + fileUUID;
-        String fileUrl = fileUUID;
-        response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileUUID, "UTF-8"));
+        byte[] bytes = fileService.downloadFile(fileId, outputStream);
+
+        response.addHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileService.getById(fileId).getName(), "UTF-8"));
         response.setContentType("application/octet-stream");
 
-        try {
-            ////通过文件路径读取文件字节流
-            //byte[] bytes = FileUtil.readBytes(uploadFile);
-            ////通过输出流返回文件
+        //通过输出流返回文件
+        outputStream.write(bytes);
+        outputStream.flush();
+        outputStream.close();
 
-            //
-
-            ByteArrayOutputStream byteArrayOutputStream = OBSUtils.downloadFile(fileUrl);
-            byte[] bytes = byteArrayOutputStream.toByteArray();
-            outputStream.write(bytes);
-            outputStream.flush();
-        } catch (IORuntimeException e) {
-            log.warn("没有找到文件");
-
-        } finally {
-            assert outputStream != null;
-            outputStream.close();
-        }
 
     }
 
@@ -143,7 +129,7 @@ public class FilesController {
     @GetMapping("/page")
     public Result<IPage<Files>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
                                          @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                         @ApiParam(name = "fileName", value = "文件名称", required = true) @RequestParam(defaultValue = "") String fileName
+                                         @ApiParam(name = "fileName", value = "文件名称") @RequestParam(defaultValue = "") String fileName
     ) {
         IPage<Files> page = fileService.getPage(pageNum, pageSize, fileName);
         if (pageNum > page.getPages()) {

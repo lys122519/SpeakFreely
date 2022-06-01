@@ -1,6 +1,7 @@
 package com.sf.service.impl;
 
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
@@ -28,8 +29,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.ServletOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -182,6 +186,37 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
 
         return files;
+    }
+
+    /**
+     * 下载单文件
+     *
+     * @param fileId
+     * @param outputStream
+     * @return
+     */
+    @Override
+    public byte[] downloadFile(Integer fileId, ServletOutputStream outputStream) {
+
+        byte[] bytes = new byte[0];
+        try {
+            //通过文件路径读取文件字节流
+
+            Files files = fileMapper.selectById(fileId);
+            String[] split = files.getUrl().split("https://speakfreely.obs.cn-north-4.myhuaweicloud.com:443/");
+            if (split.length != 2) {
+                ByteArrayOutputStream byteArrayOutputStream = OBSUtils.downloadFile(split[1]);
+                bytes = byteArrayOutputStream.toByteArray();
+                return bytes;
+            } else {
+                throw new ServiceException(Constants.CODE_600, "文件url出错");
+            }
+
+        } catch (IOException e) {
+            log.warn("没有找到文件");
+            throw new ServiceException(Constants.CODE_600, "下载文件出错");
+        }
+
     }
 
     /**

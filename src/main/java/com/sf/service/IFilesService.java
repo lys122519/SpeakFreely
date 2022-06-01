@@ -5,7 +5,9 @@ import com.sf.entity.Files;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.ServletOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 
 /**
@@ -51,4 +53,13 @@ public interface IFilesService extends IService<Files> {
      * @return
      */
     List<Files>  findAllFile();
+
+    /**
+     * 下载单文件
+     * @param fileId
+     * @param outputStream
+     * @return
+     */
+    byte[] downloadFile(Integer fileId, ServletOutputStream outputStream);
+
 }
