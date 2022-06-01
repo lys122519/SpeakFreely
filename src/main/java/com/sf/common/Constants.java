@@ -9,26 +9,26 @@ public interface Constants {
     /**
      * 系统错误
      */
-    String CODE_500 = "500";
+    Integer CODE_500 = 500;
     /**
      * 请求成功
      */
-    String CODE_200 = "200";
+    Integer CODE_200 = 200;
 
     /**
      * 参数错误
      */
-    String CODE_400 = "400";
+    Integer CODE_400 = 400;
 
     /**
      * 权限不足
      */
-    String CODE_401 = "401";
+    Integer CODE_401 = 401;
 
     /**
      * 业务异常
      */
-    String CODE_600 = "600";
+    Integer CODE_600 = 600;
 
 
 }

@@ -21,6 +21,7 @@ import springfox.documentation.service.Contact;
 @Configuration
 //@EnableKnife4j
 @EnableSwagger2WebMvc
+
 // 访问路径 http://localhost:9090/doc.html#/home
 public class SwaggerConfig {
 

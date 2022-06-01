@@ -17,17 +17,9 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(ServiceException.class)
     @ResponseBody
-    public Result handleServiceException(ServiceException se) {
+    public Result<Void> handleServiceException(ServiceException se) {
         return Result.error(se.getCode(), se.getMessage());
     }
 
 
-    /**
-     * 抛出ControllerException 调用该方法
-     */
-    @ExceptionHandler(ControllerException.class)
-    @ResponseBody
-    public Result handleControllerException(ControllerException e){
-        return Result.error(e.getCode(), e.getMessage());
-    }
 }

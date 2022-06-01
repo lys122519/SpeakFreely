@@ -1,8 +1,12 @@
 package com.sf.utils;
 
 import com.obs.services.ObsClient;
+import com.obs.services.exception.ObsException;
 import com.obs.services.model.PutObjectRequest;
 import com.obs.services.model.PutObjectResult;
+import com.sf.controller.FilesController;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -32,6 +36,7 @@ public class OBSUtils {
         staticObsClient = obsClient;
     }
 
+    private static final Logger log = LoggerFactory.getLogger(OBSUtils.class);
 
     private static final String BUCKET_NAME = "speakfreely";
 
@@ -61,14 +66,22 @@ public class OBSUtils {
     }
 
     public static ByteArrayOutputStream downloadFile(String fileUrl) throws IOException {
-        InputStream input = staticObsClient.getObject(BUCKET_NAME, fileUrl).getObjectContent();
-        byte[] b = new byte[1024];
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        int len;
-        while ((len = input.read(b)) != -1) {
-            bos.write(b, 0, len);
+        InputStream input = null;
+        ByteArrayOutputStream bos = null;
+        try {
+            input = staticObsClient.getObject(BUCKET_NAME, fileUrl).getObjectContent();
+            byte[] b = new byte[1024];
+            bos = new ByteArrayOutputStream();
+            int len;
+            while ((len = input.read(b)) != -1) {
+                bos.write(b, 0, len);
+            }
+        }catch(ObsException ex){
+            log.warn(ex.getErrorMessage());
         }
 
+
+        assert bos != null;
         bos.close();
         input.close();
         return bos;

@@ -6,16 +6,16 @@ package com.sf.exception;
  * @date: 2022-03-27 14:35
  */
 public class ServiceException extends RuntimeException {
-    private String code;
+    private Integer code;
 
-    public ServiceException(String code, String msg) {
+    public ServiceException(Integer code, String msg) {
         super(msg);
         this.code = code;
     }
 
 
 
-    public String getCode() {
+    public Integer getCode() {
         return code;
     }
 }
