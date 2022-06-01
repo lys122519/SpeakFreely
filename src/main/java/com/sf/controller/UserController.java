@@ -75,7 +75,7 @@ public class UserController {
         return Result.success(userService.page(new Page<>(pageNum, pageSize)));
     }
 
-    @ApiOperation(value = "用户登录", notes = "用户名或邮箱配合密码登录", httpMethod = "POST")
+    @ApiOperation(value = "用户登录", notes = "参数：username/email + password", httpMethod = "POST")
     @PostMapping("/login")
     public Result userLogin(@RequestBody UserDTO userDTO) {
         if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getPassword())) {
@@ -85,23 +85,19 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "用户忘记密码", notes = "用于在登录忘记密码时进行密码重置", httpMethod = "POST")
+    @ApiOperation(value = "用户忘记密码", notes = "参数：email+password+code", httpMethod = "POST")
     @PostMapping("/pwdReset")
     public Result userPwdReset(@RequestBody UserDTO userDTO) {
         if (StrUtil.isNotBlank(userDTO.getEmail()) && StrUtil.isNotBlank(userDTO.getPassword()) &&
-                StrUtil.isNotBlank(userDTO.getConfirmPwd()) && StrUtil.isNotBlank(userDTO.getCode())) {
-            if(userDTO.getPassword().equals(userDTO.getConfirmPwd())){
-                userService.userPwdReset(userDTO.getEmail(),userDTO.getPassword(),userDTO.getCode());
-                return Result.success("密码重置成功");
-            }else {
-                return Result.error(Constants.CODE_400, "两次密码输入不一致!");
-            }
+                StrUtil.isNotBlank(userDTO.getCode())) {
+            userService.userPwdReset(userDTO.getEmail(), userDTO.getPassword(), userDTO.getCode());
+            return Result.success("密码重置成功");
         } else {
             return Result.error(Constants.CODE_400, "参数异常!");
         }
     }
 
-    @ApiOperation(value = "用户信息修改", notes = "用户个人中心修改基本信息", httpMethod = "POST")
+    @ApiOperation(value = "用户信息修改", notes = "必须的参数：username, email, code", httpMethod = "POST")
     @PostMapping("/infoModify")
     public Result userInfoModify(@RequestBody UserDTO userDTO) {
         if (StrUtil.isNotBlank(userDTO.getEmail()) && StrUtil.isNotBlank(userDTO.getCode())) {

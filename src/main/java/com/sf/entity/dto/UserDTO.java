@@ -5,12 +5,11 @@ public class UserDTO {
     private Integer id;
     private String username;
     private String password;
-    private String confirmPwd;
     private String nickname;
     private String email;
     private String phone;
     private String address;
-    private String avatar_url;
+    private String avatarUrl;
     private String role;
     private String code;
     private String token;
@@ -37,14 +36,6 @@ public class UserDTO {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getConfirmPwd() {
-        return confirmPwd;
-    }
-
-    public void setConfirmPwd(String confirmPwd) {
-        this.confirmPwd = confirmPwd;
     }
 
     public String getNickname() {
@@ -79,12 +70,12 @@ public class UserDTO {
         this.address = address;
     }
 
-    public String getAvatar_url() {
-        return avatar_url;
+    public String getAvatarUrl() {
+        return avatarUrl;
     }
 
-    public void setAvatar_url(String avatar_url) {
-        this.avatar_url = avatar_url;
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public String getRole() {
