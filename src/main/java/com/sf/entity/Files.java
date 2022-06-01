@@ -2,6 +2,7 @@ package com.sf.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import io.swagger.annotations.ApiModel;
@@ -41,6 +42,7 @@ public class Files implements Serializable {
         private String md5;
 
       @ApiModelProperty("是否已删除")
+      @TableLogic
       private Boolean deleted;
 
       @ApiModelProperty("是否禁用")

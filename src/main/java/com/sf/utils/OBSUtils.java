@@ -2,6 +2,7 @@ package com.sf.utils;
 
 import com.obs.services.ObsClient;
 import com.obs.services.model.PutObjectRequest;
+import com.obs.services.model.PutObjectResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
@@ -29,8 +30,8 @@ public class OBSUtils {
         staticObsClient = obsClient;
     }
 
-    @Value("${files.upload.bucketname}")
-    private static String bucketName;
+
+    private static final String BUCKET_NAME = "speakfreely";
 
     /**
      * OBS 上传文件
@@ -39,17 +40,19 @@ public class OBSUtils {
      * @param filePath
      * @throws IOException
      */
-    public static void uploadFile(String fileName, String filePath) throws IOException {
+    public static PutObjectResult uploadFile(String fileName, String filePath) throws IOException {
 
         try {
             //  为待上传的本地文件路径，需要指定到具体的文件名
             PutObjectRequest request = new PutObjectRequest();
-            request.setBucketName("file-but");
+            request.setBucketName(BUCKET_NAME);
             request.setObjectKey(fileName);
             request.setFile(new File(filePath));
-            staticObsClient.putObject(request);
+            PutObjectResult putObjectResult = staticObsClient.putObject(request);
+            return putObjectResult;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
 
 

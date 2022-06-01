@@ -8,13 +8,18 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.obs.services.model.PutObjectResult;
+import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.entity.Files;
+import com.sf.exception.ServiceException;
 import com.sf.mapper.FilesMapper;
 import com.sf.service.IFilesService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.OBSUtils;
 import com.sf.utils.RedisUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +39,7 @@ import java.util.List;
  */
 @Service
 public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements IFilesService {
+    private static final Logger log = LoggerFactory.getLogger(FilesServiceImpl.class);
 
     @Value("${files.upload.path}")
     private String fileUploadPath;
@@ -83,37 +89,42 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         //获取文件md5
         String fileMD5 = SecureUtil.md5(uploadFile);
 
+
         //根据md5查询是否有重复文件
-        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("md5", fileMD5);
-        List<Files> filesList = fileMapper.selectList(queryWrapper);
+        String urlFromSql = selectFileByMD5(fileMD5);
 
-        String urlFromSql = null;
-        if (filesList.size() != 0) {
-            urlFromSql = filesList.get(0).getUrl();
-        }
-
+        // 存储数据库的file
+        Files saveFile = new Files();
 
         //从数据库查不到相同的md5，则上传，否则将已有文件的url其该文件最终url
         if (urlFromSql != null) {
-            finalUrl += urlFromSql;
+            saveFile.setUrl(urlFromSql);
             //相同md5的文件存在，删除已保存文件
             uploadFile.delete();
         } else {
             //无相同md5文件，则上传
-            finalUrl = StringConst.BASE_URL + fileUUID;
-            OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
+            try {
+                PutObjectResult result = OBSUtils.uploadFile(fileUUID, uploadFile.getPath());
+                assert result != null;
+                finalUrl = result.getObjectUrl();
+                saveFile.setUrl(finalUrl);
+            } catch (Exception e) {
+                log.warn("上传文件失败");
+                throw new ServiceException(Constants.CODE_600, "上传失败，请重试");
+            }
 
         }
 
-        // 存储数据库
-        Files saveFile = new Files();
         saveFile.setName(originalFilename);
         saveFile.setType(type);
         saveFile.setSize(size / 1024);
-        saveFile.setUrl(finalUrl);
         saveFile.setMd5(fileMD5);
+
         fileMapper.insert(saveFile);
+
+        //存储完后删除文件
+        uploadFile.delete();
+
 
         setFilesRedisCache();
 
@@ -150,5 +161,20 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
         //设置缓存
         List<Files> list = fileMapper.selectList(queryWrapper);
         RedisUtils.setRedisCache(StringConst.FILE_KEY, JSONUtil.toJsonStr(list));
+    }
+
+    /**
+     * 根据文件md5查询文件
+     *
+     * @param md5
+     * @return
+     */
+    private String selectFileByMD5(String md5) {
+        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("md5", md5);
+        List<Files> filesList = fileMapper.selectList(queryWrapper);
+        return filesList.size() == 0 ? null : filesList.get(0).getUrl();
+
+
     }
 }

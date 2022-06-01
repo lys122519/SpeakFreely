@@ -3,10 +3,12 @@ package com.sf.controller;
 import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sf.common.Constants;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
- *  前端控制器
+ * 前端控制器
  * </p>
  *
  * @author leung
@@ -38,27 +40,42 @@ import javax.servlet.http.HttpServletResponse;
 @Api(tags = "文件相关接口")
 public class FilesController {
 
+    private static final Logger log = LoggerFactory.getLogger(FilesController.class);
+
     @Resource
     private IFilesService fileService;
 
-    @PostMapping
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
     @ApiOperation(value = "新增/修改接口")
+    @PostMapping
     public Result save(@RequestBody Files file) {
         return Result.success(fileService.saveOrUpdate(file));
     }
 
-    @DeleteMapping("/{id}")
-    @ApiOperation(value = "根据id删除")
-    public Result delete(@PathVariable Integer id) {
 
-        fileService.deleteById(id);
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
+    @ApiOperation(value = "根据id删除")
+    @DeleteMapping("/{fileId}")
+    public Result delete(@ApiParam(name = "fileId", value = "删除id", required = true) @PathVariable Integer fileId) {
+
+        fileService.deleteById(fileId);
         return Result.success();
     }
 
-    @PostMapping("/del/batch")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "删除成功"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
     @ApiOperation(value = "批量删除")
-    public Result deleteBatch(@RequestBody List<Integer> ids) {
-        fileService.deleteBatchByIds(ids);
+    @PostMapping("/del/batch")
+    public Result deleteBatch(@ApiParam(name = "fileIdList", value = "删除ids", required = true) @RequestBody List<Integer> fileIdList) {
+        fileService.deleteBatchByIds(fileIdList);
         return Result.success();
     }
 
@@ -69,8 +86,13 @@ public class FilesController {
      * @return
      * @throws IOException
      */
-    @PostMapping("/upload")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "上传成功"),
+            @ApiResponse(code = 600, message = "上传至OBS失败"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
     @ApiOperation(value = "文件上传")
+    @PostMapping("/upload")
     public Result upload(@RequestParam MultipartFile file) throws IOException {
 
         fileService.uploadFile(file);
@@ -84,9 +106,10 @@ public class FilesController {
      * @param response
      * @throws IOException
      */
-    @GetMapping("/{fileUUID}")
+
     @ApiOperation(value = "文件下载")
-    public void download(@PathVariable String fileUUID, HttpServletResponse response) throws IOException {
+    @GetMapping("/{fileUUID}")
+    public void download(@ApiParam(name = "fileUUID", value = "file的名称", required = true) @PathVariable String fileUUID, HttpServletResponse response) throws IOException {
         ServletOutputStream outputStream;
         //根据文件唯一标识码获取文件
         File uploadFile = new File(StringConst.BASE_URL + fileUUID);
@@ -103,28 +126,39 @@ public class FilesController {
         outputStream.close();
     }
 
-
-    @GetMapping("/{id}")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "查找成功"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
     @ApiOperation(value = "根据id查找一个")
-    public Result findOne(@PathVariable Integer id) {
+    @GetMapping("/{id}")
+    public Result findOne(@ApiParam(name = "id", value = "文件id", required = true) @PathVariable Integer id) {
         return Result.success(fileService.getById(id));
     }
 
-    @GetMapping
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "查找成功"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
     @ApiOperation(value = "查找所有")
+    @GetMapping
     public Result findAll() {
         return Result.success(fileService.list());
     }
 
-    @GetMapping("/page")
+    @ApiResponses({
+            @ApiResponse(code = 200, message = "查找成功"),
+            @ApiResponse(code = 401, message = "权限不足")
+    })
     @ApiOperation(value = "分页查找")
-    public Result findPage(@RequestParam Integer pageNum,
-                           @RequestParam Integer pageSize,
-                           @RequestParam(defaultValue = "") String name
+    @GetMapping("/page")
+    public Result findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+                           @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
+                           @ApiParam(name = "fileName", value = "文件名称", required = true) @RequestParam(defaultValue = "") String fileName
     ) {
-        IPage<Files> page = fileService.getPage(pageNum, pageSize, name);
+        IPage<Files> page = fileService.getPage(pageNum, pageSize, fileName);
         if (pageNum > page.getPages()) {
-            page = fileService.getPage((int) page.getPages(), pageSize, name);
+            page = fileService.getPage((int) page.getPages(), pageSize, fileName);
         }
         return Result.success(page);
     }

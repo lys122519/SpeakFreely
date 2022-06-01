@@ -9,7 +9,7 @@ public interface StringConst {
     /**
      * OBS 上传路径
      */
-    String BASE_URL = "https://file-but.obs.cn-north-4.myhuaweicloud.com/";
+    String BASE_URL = "https://speakfreely.obs.cn-north-4.myhuaweicloud.com/";
 
     /**
      * redis key

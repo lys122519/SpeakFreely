@@ -51,6 +51,26 @@ mybatis-plus:
       logic-delete-value: 1 # 逻辑已删除值(默认为 1)
       logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
 
+# 设置日志级别，root表示根节点，即整体应用日志级别
+logging:
+  #设置分组，对某个组设置日志级别
+  group:
+    controller: com.sf.controller
+    service: com.sf.service
+  level:
+    service: info
+    controller: info
+  file:
+    name: server.log
+  logback:
+    rollingpolicy:
+      #日志文件大小
+      max-file-size: 4MB
+      file-name-pattern: server.%d{yyyy-MM-dd}.%i.log
+      max-history: 10
+
+
+
 
 # 文件路径
 files:
