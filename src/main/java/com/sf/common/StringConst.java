@@ -6,6 +6,11 @@ package com.sf.common;
  * @date: 2022-05-30 22:37
  */
 public interface StringConst {
+
+    /**
+     * TOKEN key prefix
+     */
+    String TOKEN_PREFIX = "TOKEN";
     /**
      * OBS 上传路径
      */
