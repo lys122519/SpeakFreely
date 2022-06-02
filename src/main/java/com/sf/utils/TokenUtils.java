@@ -55,23 +55,23 @@ public class TokenUtils {
     }
 
 
-    /**
-     * 生成token
-     *
-     * @param userId
-     * @param sign   密码
-     * @return
-     */
-    public static String getToken(String userId, String sign) {
-
-        return JWT.create()
-                //将userid保存到token中，作为载荷
-                .withAudience(userId)
-                //2小时后过期
-                .withExpiresAt(DateUtil.offsetHour(new Date(), 2))
-                //将sign+时间戳+作为token密钥
-                .sign(Algorithm.HMAC256(DateUtil.date() + RandomUtil.randomNumbers(16)));
-    }
+    ///**
+    // * 生成token
+    // *
+    // * @param userId
+    // * @param sign   密码
+    // * @return
+    // */
+    //public static String getToken(String userId, String sign) {
+    //
+    //    return JWT.create()
+    //            //将userid保存到token中，作为载荷
+    //            .withAudience(userId)
+    //            //2小时后过期
+    //            .withExpiresAt(DateUtil.offsetHour(new Date(), 2))
+    //            //将sign+时间戳+作为token密钥
+    //            .sign(Algorithm.HMAC256(DateUtil.date() + RandomUtil.randomNumbers(16)));
+    //}
 
     /**
      * 获取当前登录用户信息

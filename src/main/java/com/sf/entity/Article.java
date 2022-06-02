@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -48,6 +49,8 @@ public class Article implements Serializable {
     @ApiModelProperty("是否删除")
     private Boolean deleted;
 
+    @TableField(exist = false)
+    private List<Tags> tags;
 
     public Integer getId() {
         return id;
@@ -103,6 +106,14 @@ public class Article implements Serializable {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public List<Tags> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<Tags> tags) {
+        this.tags = tags;
     }
 
     @Override
