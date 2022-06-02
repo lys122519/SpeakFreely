@@ -83,8 +83,9 @@ public class JwtInterceptor implements HandlerInterceptor {
         //}
 
         //以TOKEN_PREFIX+token取值，判断TOKEN是否合法
-        String tFromRedis = stringRedisTemplate.opsForValue().get(StringConst.TOKEN_PREFIX + token);
-        if (tFromRedis != null) {
+        //String tFromRedis = stringRedisTemplate.opsForValue().get(StringConst.TOKEN_PREFIX + token);
+        String tokenFromRedis = stringRedisTemplate.opsForValue().get(token);
+        if (tokenFromRedis != null) {
             return true;
             //String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
             //if (token.equals(tokenFromRedis)) {
