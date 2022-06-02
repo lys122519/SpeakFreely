@@ -1,8 +1,12 @@
 package com.sf.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sf.common.Result;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 
@@ -13,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>
- *  前端控制器
+ * 前端控制器
  * </p>
  *
  * @author leung
@@ -28,38 +32,41 @@ public class TagsController {
 
     @PostMapping
     @ApiOperation(value = "新增/修改接口")
-    public Result save(@RequestBody Tags tags) {
-        return Result.success(tagsService.saveOrUpdate(tags));
-        }
+    public Result<Void> save(@RequestBody Tags tags) {
+        tagsService.saveOrUpdate(tags);
+        return Result.success();
+    }
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "根据id删除")
-    public Result delete(@PathVariable Integer id) {
-        return Result.success(tagsService.removeById(id));
+    public Result<Void> delete(@PathVariable Integer id) {
+        tagsService.removeById(id);
+        return Result.success();
     }
 
     @PostMapping("/del/batch")
     @ApiOperation(value = "批量删除")
-    public Result deleteBatch(@RequestBody List<Integer> ids){
-        return Result.success(tagsService.removeBatchByIds(ids));
+    public Result<Void> deleteBatch(@RequestBody List<Integer> ids) {
+        tagsService.removeBatchByIds(ids);
+        return Result.success();
     }
 
     @GetMapping("/{id}")
     @ApiOperation(value = "根据id查找一个")
-    public Result findOne(@PathVariable Integer id) {
+    public Result<Tags> findOne(@PathVariable Integer id) {
         return Result.success(tagsService.getById(id));
     }
 
     @GetMapping
     @ApiOperation(value = "查找所有")
-    public Result findAll() {
+    public Result<List<Tags>> findAll() {
         return Result.success(tagsService.list());
     }
 
     @GetMapping("/page")
     @ApiOperation(value = "分页查找")
-    public Result findPage(@RequestParam Integer pageNum,
-    @RequestParam Integer pageSize) {
+    public Result<IPage<Tags>> findPage(@RequestParam Integer pageNum,
+                                        @RequestParam Integer pageSize) {
         return Result.success(tagsService.page(new Page<>(pageNum, pageSize)));
     }
 }
