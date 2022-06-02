@@ -3,6 +3,7 @@ package com.sf.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -16,6 +17,8 @@ import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.TokenUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -42,6 +45,8 @@ import java.util.concurrent.TimeUnit;
  */
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
+    private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
+
     @Autowired
     UserMapper userMapper;
 
@@ -76,89 +81,111 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public UserDTO userRegister(UserDTO userDTO) { // 用户注册
         String email = userDTO.getEmail();
-        if (!checkEmail(email)) { // 先检验邮箱格式
-            throw new ServiceException(Constants.CODE_400, "邮箱格式错误"); // 格式不正确时抛出异常
-        }
-        String codeFromRedis = stringRedisTemplate.opsForValue().get(StringConst.CODE_EMAIL + email);
-        if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
-            throw new ServiceException(Constants.CODE_600, "请先获取验证码");
-        } else {
-            if (userDTO.getCode().equals(codeFromRedis)) {
-                if (checkUser(StringConst.USER_REGISTER, "username", userDTO.getUsername()) != null) {
-                    throw new ServiceException(Constants.CODE_600, "用户名已被注册");
-                } else if (checkUser(StringConst.USER_REGISTER, "email", userDTO.getEmail()) != null) {
-                    throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
-                }
-                User user = new User(); // 实例化一个新用户对象
-                copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
-                userMapper.insert(user); // 向数据库插入新用户信息
-                // 修改成功，删除redis缓存中对应的验证码信息
-                stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
-                // 直接使用新注册的用户信息登录
-                return userLogin(userDTO.getUsername(),userDTO.getPassword());// 设置token并返回
-            } else {
-                throw new ServiceException(Constants.CODE_600, "验证码不匹配");
+        if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
+            if (checkUser(StringConst.USER_REGISTER, "username", userDTO.getUsername()) != null) {
+                throw new ServiceException(Constants.CODE_600, "用户名已被注册");
+            } else if (checkUser(StringConst.USER_REGISTER, "email", email) != null) {
+                throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
             }
+            User user = new User(); // 实例化一个新用户对象
+            copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
+            userMapper.insert(user); // 向数据库插入新用户信息
+            // 修改成功，删除redis缓存中对应的验证码信息
+            stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+            // 直接使用新注册的用户信息登录
+            return userLogin(userDTO.getUsername(), userDTO.getPassword());// 设置token并返回
+        } else {
+            throw new ServiceException(Constants.CODE_600, "验证码不匹配");
         }
     }
 
     @Override
-    public UserDTO userInfoModify(UserDTO userDTO) {
+    public UserDTO userInfoModify(UserDTO userDTO) { // 用户信息修改操作
         // 通过token查询redis中的用户信息
         Map<Object, Object> userFromRedis = stringRedisTemplate.opsForHash().entries(userDTO.getToken());
-        if(userFromRedis.size()==0){// redis中获取不到token对应的用户信息则抛出异常
+        if (userFromRedis.size() == 0) {// redis中获取不到token对应的用户信息则抛出异常
             throw new ServiceException(Constants.CODE_400, "用户token已失效");
         }
-        String email = userFromRedis.get("email").toString(); // 从redis缓存中获取email
-        if (!checkEmail(email)) { // 先检验邮箱格式
-            throw new ServiceException(Constants.CODE_400, "邮箱格式有误"); // 格式不正确时抛出异常
-        }
-        String codeFromRedis = stringRedisTemplate.opsForValue().get(StringConst.CODE_EMAIL + email);
-        if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
-            throw new ServiceException(Constants.CODE_600, "请先获取验证码");
-        } else {
-            if (userDTO.getCode().equals(codeFromRedis)) {
-                if (userDTO.getUsername() != null) {
-                    throw new ServiceException(Constants.CODE_600, "用户名一经注册不支持修改");
-                } else if (userDTO.getEmail() != null) {
-                    throw new ServiceException(Constants.CODE_600, "请不要在此处修改邮箱");
-                } else {
-                    User user = new User();
-                    copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
-                    user.setId(Integer.valueOf((String) userFromRedis.get("id"))); // 设置id
-                    userMapper.updateById(user); // 将更新同步到数据库
-                    // 修改成功，删除redis缓存中对应的验证码信息
-                    stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
-
-                    return setToken(userDTO);// 更新token并返回
-                }
+        if (StrUtil.isNotBlank(userDTO.getCode())) {
+            String email = userFromRedis.get("email").toString(); // 从redis缓存中获取email
+            if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
+                infoModify(userDTO, (String) userFromRedis.get("id")); // 调用更新方法更新用户信息
+                // 修改成功，删除redis缓存中对应的验证码信息
+                stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+                return setToken(userDTO);// 更新token并返回
             } else {
                 throw new ServiceException(Constants.CODE_600, "验证码不匹配");
             }
+        } else if (isBaseInfo(userDTO)) {
+            infoModify(userDTO, (String) userFromRedis.get("id")); // 调用更新方法更新用户信息
+            return setToken(userDTO);// 更新token并返回
+        } else {
+            throw new ServiceException(Constants.CODE_600, "重要信息修改需要邮箱验证");
+        }
+    }
+
+    /*判断是否含有用户重要信息*/
+    public Boolean isBaseInfo(UserDTO userDTO) {
+        return userDTO.getUsername() == null && userDTO.getEmail() == null && userDTO.getId() == null &&
+                userDTO.getPassword() == null && userDTO.getCode() == null && userDTO.getRole() == null;
+    }
+
+    /*进行用户信息修改实际操作*/
+    public void infoModify(UserDTO userDTO, String userId) {
+        if (userDTO.getId() != null) {
+            throw new ServiceException(Constants.CODE_600, "用户ID一经注册不能被修改");
+        } else if (userDTO.getUsername() != null) {
+            throw new ServiceException(Constants.CODE_600, "用户名一经注册不支持修改");
+        } else if (userDTO.getEmail() != null) {
+            throw new ServiceException(Constants.CODE_600, "请不要在此处修改邮箱");
+        } else {
+            User user = new User();
+            copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
+            user.setId(Integer.valueOf(userId)); // 设置id
+            userMapper.updateById(user); // 将更新同步到数据库
+        }
+    }
+
+    @Override
+    public UserDTO emailModify(UserDTO userDTO) {
+        // 通过token查询redis中的用户信息
+        Map<Object, Object> userFromRedis = stringRedisTemplate.opsForHash().entries(userDTO.getToken());
+        if (userFromRedis.size() == 0) {// redis中获取不到token对应的用户信息则抛出异常
+            throw new ServiceException(Constants.CODE_400, "用户token已失效");
+        }
+        String email = userDTO.getEmail(); // 从redis缓存中获取email
+        if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
+            // 检验新邮箱是否被绑定
+            if (checkUser(StringConst.MODIFY_EMAIL, "email", email) != null) {
+                throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
+            }
+            User user = new User();
+            user.setEmail(email); // 设置用户邮箱为新邮箱
+            user.setId(Integer.valueOf((String) userFromRedis.get("id"))); // 设置id
+            log.info(user.getId().toString());
+            userMapper.updateById(user); // 将更新同步到数据库
+            // 修改成功，删除redis缓存中对应的验证码信息
+            stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+
+            return setToken(userDTO);// 更新token并返回
+        } else {
+            throw new ServiceException(Constants.CODE_600, "验证码不匹配");
         }
     }
 
     @Override
     public void userPwdReset(String email, String newPwd, String code) {
-        if (!checkEmail(email)) { // 先检验邮箱格式
-            throw new ServiceException(Constants.CODE_400, "邮箱格式错误"); // 格式不正确时抛出异常
-        }
-        String codeFromRedis = stringRedisTemplate.opsForValue().get(StringConst.CODE_EMAIL + email);
-        if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
-            throw new ServiceException(Constants.CODE_600, "请先获取验证码");
-        } else {
-            if (code.equals(codeFromRedis)) {
-                User user = checkUser(StringConst.PWD_RESET, "email", email); // 密码重置操作
-                UpdateWrapper<User> updateWrapper = new UpdateWrapper<>(); // 包装更新器
-                updateWrapper.eq("id", user.getId()); // 根据检查结果用户的id确定更新对象(唯一性)
-                updateWrapper.set("password", newPwd); // 只更新password字段
-                userMapper.update(null, updateWrapper); // 将更新同步到数据库
+        if (checkEmailCode(email, code)) { // 验证邮箱与验证码信息
+            User user = checkUser(StringConst.PWD_RESET, "email", email); // 密码重置操作
+            UpdateWrapper<User> updateWrapper = new UpdateWrapper<>(); // 包装更新器
+            updateWrapper.eq("id", user.getId()); // 根据检查结果用户的id确定更新对象(唯一性)
+            updateWrapper.set("password", newPwd); // 只更新password字段
+            userMapper.update(null, updateWrapper); // 将更新同步到数据库
 
-                // 修改成功，删除redis缓存中对应的验证码信息
-                stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
-            } else {
-                throw new ServiceException(Constants.CODE_600, "验证码不匹配");
-            }
+            // 修改成功，删除redis缓存中对应的验证码信息
+            stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+        } else {
+            throw new ServiceException(Constants.CODE_600, "验证码不匹配");
         }
     }
 
@@ -185,22 +212,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     /*根据操作标识及邮箱返回邮件标题*/
     public String getEmailTitle(String action, String email) {
-        if (action.equals("emailRegister")) { // 注册邮件操作
-            if (checkUser(StringConst.SEND_EMAIL, "email", email) == null) { // 用户为空才可创建邮件
+        if (checkUser(StringConst.SEND_EMAIL, "email", email) == null) { // 用户为空才可创建邮件
+            if (action.equals(StringConst.EMAIL_REGISTER)) { // 注册邮件操作
                 return "用户注册验证码";
-            } else { // 注册操作用户已存在则抛出异常
-                throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
-            }
-        } else if (checkUser(StringConst.SEND_EMAIL, "email", email) != null) { // 其他操作需判断用户是否存在
-            if (action.equals("emailPwdReset")) { // 重置密码邮件
-                return "密码重置验证码";
-            } else if (action.equals("emailInfoModify")) { // 信息修改邮件
-                return "用户信息修改验证码";
-            } else {
+            } else if (action.equals(StringConst.EMAIL_MODIFY)) { // 换绑邮件操作
+                return "邮箱换绑验证码";
+            } else { // 用户不存在时可以进行的操作均未执行，抛出异常
                 throw new ServiceException(Constants.CODE_400, "未知操作");
             }
-        } else { // 非注册操作时邮箱对应的用户不存在则抛出异常
-            throw new ServiceException(Constants.CODE_600, "用户不存在");
+        } else { // 其他操作需用户存在
+            if (action.equals(StringConst.EMAIL_PWD_RESET)) { // 重置密码邮件
+                return "密码重置验证码";
+            } else if (action.equals(StringConst.EMAIL_INFO_MODIFY)) { // 信息修改邮件
+                return "用户信息修改验证码";
+            } else { // 用户存在时可以进行的操作均未执行则抛出异常
+                throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
+            }
         }
     }
 
@@ -232,7 +259,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             //将用户缓存存入redis
             stringRedisTemplate.opsForHash().putAll(token, userFromRedis);
         }
-        stringRedisTemplate.expire(token, 7200, TimeUnit.SECONDS); // 重置过期时长
+        stringRedisTemplate.expire(token, Constants.USER_REDIS_TIMEOUT, TimeUnit.SECONDS); // 重置过期时长
 
         return userDTO;
     }
@@ -240,7 +267,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     /*将用户信息中的id、username、email与用户的redis缓存同步*/
     public void setUserRedis(UserDTO userDTO, Map<Object, Object> userFromRedis) {
         // 将用户信息拷贝到用户redis对象
-        if (userDTO.getId()==null) { // id只能取不能更新
+        if (userDTO.getId() == null) { // id只能取不能更新
             userDTO.setId(Integer.valueOf((String) userFromRedis.get("id")));
         }
         if (StrUtil.isBlank(userDTO.getUsername())) { // username只能取不能更新
@@ -266,7 +293,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         long count = userMapper.selectCount(queryWrapper);
 
         switch (action) { // 分支返回检查结果
-            case StringConst.SEND_EMAIL: // 邮件发送(只需判断是否存在即可，因此放在此处)
+            case StringConst.SEND_EMAIL: // 邮件发送(只需判断是否存在即可)
+            case StringConst.MODIFY_EMAIL: // 邮件换绑(只需判断是否存在即可)
             case StringConst.USER_REGISTER: // 注册操作需判断用户是否已存在
                 if (count != 0) {
                     return new User(); // 用户已存在会返回空对象
@@ -283,6 +311,19 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 return userMapper.selectOne(queryWrapper); // 正常会返回指定对象
             default:
                 return null;
+        }
+    }
+
+    /*验证邮箱与验证码的正确性*/
+    public Boolean checkEmailCode(String email, String code) {
+        if (!checkEmail(email)) { // 先检验邮箱格式
+            throw new ServiceException(Constants.CODE_400, "邮箱格式有误"); // 格式不正确时抛出异常
+        }
+        String codeFromRedis = stringRedisTemplate.opsForValue().get(StringConst.CODE_EMAIL + email);
+        if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
+            throw new ServiceException(Constants.CODE_600, "请先获取验证码");
+        } else {
+            return code.equals(codeFromRedis);
         }
     }
 
