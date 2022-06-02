@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
 import com.sf.config.AuthAccess;
 import com.sf.exception.ServiceException;
+import com.sf.utils.TokenUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.*;
@@ -105,6 +106,7 @@ public class UserController {
     @ApiOperation(value = "用户信息修改", notes = "必须参数：token+code((nickname/phone/address/avatarUrl)修改不需要)", httpMethod = "POST")
     @PostMapping("/infoModify")
     public Result<UserDTO> userInfoModify(@RequestBody UserDTO userDTO) {
+        userDTO.setToken(TokenUtils.getToken());
         if (StrUtil.isNotBlank(userDTO.getToken())) {
             return Result.success(userService.userInfoModify(userDTO));
         } else {
@@ -126,6 +128,7 @@ public class UserController {
     @ApiOperation(value = "邮箱换绑", notes = "必须参数：token+email+code", httpMethod = "POST")
     @PostMapping("/emailModify")
     public Result<UserDTO> emailModify(@RequestBody UserDTO userDTO) {
+        userDTO.setToken(TokenUtils.getToken());
         if (StrUtil.isNotBlank(userDTO.getToken()) && StrUtil.isNotBlank(userDTO.getEmail()) &&
                 StrUtil.isNotBlank(userDTO.getCode())) {
             return Result.success(userService.emailModify(userDTO));

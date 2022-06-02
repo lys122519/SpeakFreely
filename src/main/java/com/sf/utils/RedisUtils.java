@@ -64,4 +64,41 @@ public class RedisUtils {
             throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
         }
     }
+
+    /**
+     * 获得redis中用户的某个属性
+     *
+     * @param token
+     * @param attr
+     * @return
+     */
+    public static String getCurrentUserAttr(String token, String attr) {
+
+        //从redis中取出当前用户对象的某个属性
+        Map<Object, Object> entries = staticStringRedisTemplate.opsForHash().entries(token);
+        String value;
+        try {
+            value = (String) entries.get(attr);
+            return value;
+        } catch (Exception e) {
+            log.info(token);
+            throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
+        }
+    }
+
+    /**
+     * 获得redis中用户Map
+     *
+     * @param token
+     * @return
+     */
+    public static Map<Object, Object> getUserRedis(String token) {
+        //从redis中取出当前用户对象的某个属性
+        Map<Object, Object> entries = staticStringRedisTemplate.opsForHash().entries(token);
+        if (entries.size() == 0) {// redis中获取不到token对应的用户信息则抛出异常
+            throw new ServiceException(Constants.CODE_400, "token验证失败,请重新登录");
+        } else {
+            return entries;
+        }
+    }
 }
