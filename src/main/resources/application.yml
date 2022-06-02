@@ -43,6 +43,8 @@ spring:
 # 持久层
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
+  # 枚举包扫描
+  typeEnumsPackage: com.sf.enums
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:

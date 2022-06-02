@@ -8,6 +8,8 @@ import com.sf.config.AuthAccess;
 import com.sf.exception.ServiceException;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,6 +37,7 @@ import javax.annotation.Resource;
 @RequestMapping("/user")
 @Api(tags = "用户相关接口")
 public class UserController {
+    private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
     @Resource
     private IUserService userService;

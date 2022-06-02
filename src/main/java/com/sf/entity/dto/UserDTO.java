@@ -1,6 +1,8 @@
 package com.sf.entity.dto;
 
 
+import com.sf.enums.SexEnum;
+
 public class UserDTO {
     private Integer id;
     private String username;
@@ -8,6 +10,7 @@ public class UserDTO {
     private String nickname;
     private String email;
     private String phone;
+    private SexEnum sex;
     private String address;
     private String avatarUrl;
     private String role;
@@ -102,4 +105,11 @@ public class UserDTO {
         this.token = token;
     }
 
+    public SexEnum getSex() {
+        return sex;
+    }
+
+    public void setSex(SexEnum sex) {
+        this.sex = sex;
+    }
 }

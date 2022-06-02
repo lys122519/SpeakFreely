@@ -3,11 +3,11 @@ package com.sf.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.sf.enums.SexEnum;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 
 /**
@@ -37,6 +37,9 @@ public class User implements Serializable {
     @ApiModelProperty("昵称")
     private String nickname;
 
+    @ApiModelProperty("性别")
+    private SexEnum sex;
+
     @ApiModelProperty("邮箱")
     private String email;
 
@@ -47,7 +50,7 @@ public class User implements Serializable {
     private String address;
 
     @ApiModelProperty("创建时间")
-    private LocalDateTime createTime;
+    private String createTime;
 
     @ApiModelProperty("头像url")
     private String avatarUrl;
@@ -112,11 +115,19 @@ public class User implements Serializable {
         this.address = address;
     }
 
-    public LocalDateTime getCreateTime() {
+    public SexEnum getSex() {
+        return sex;
+    }
+
+    public void setSex(SexEnum sex) {
+        this.sex = sex;
+    }
+
+    public String getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(LocalDateTime createTime) {
+    public void setCreateTime(String createTime) {
         this.createTime = createTime;
     }
 
