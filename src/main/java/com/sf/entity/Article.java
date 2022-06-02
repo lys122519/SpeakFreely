@@ -1,9 +1,6 @@
 package com.sf.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -47,8 +44,10 @@ public class Article implements Serializable {
     private String time;
 
     @ApiModelProperty("是否删除")
+    @TableLogic
     private Boolean deleted;
 
+    @ApiModelProperty("文章标签")
     @TableField(exist = false)
     private List<Tags> tags;
 
