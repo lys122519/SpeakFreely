@@ -111,6 +111,8 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
             saveFile.setUrl(urlFromSql);
             //相同md5的文件存在，删除已保存文件
             uploadFile.delete();
+            finalUrl = urlFromSql;
+
         } else {
             //无相同md5文件，则上传
             try {

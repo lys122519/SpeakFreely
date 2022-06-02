@@ -3,6 +3,7 @@ package com.sf.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
+import com.sf.entity.dto.CommentDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -41,26 +42,28 @@ public class CommentController {
 
     @PostMapping
     @ApiOperation(value = "新增/修改接口")
-    public Result<Void> save(@RequestBody Comment comment) {
-        if (comment.getId() == null) {
+    public Result<Void> save(@RequestBody CommentDto commentDto) {
+        if (commentDto.getId() == null) {
             //新增
-            commentService.saveComment(comment);
+            commentService.saveComment(commentDto);
+        } else {
+            commentService.updateComment(commentDto);
         }
 
         return Result.success();
     }
 
     @DeleteMapping("/{id}")
-    @ApiOperation(value = "根据id删除")
+    @ApiOperation(value = "根据id删除评论、子评论及回复")
     public Result<Void> delete(@PathVariable Integer id) {
-        commentService.removeById(id);
+        commentService.deleteById(id);
         return Result.success();
     }
 
-    @PostMapping("/del/batch")
+    @DeleteMapping("/del/batch")
     @ApiOperation(value = "批量删除")
     public Result<Void> deleteBatch(@RequestBody List<Integer> ids) {
-        commentService.removeBatchByIds(ids);
+        commentService.deleteBatchByIds(ids);
         return Result.success();
     }
 

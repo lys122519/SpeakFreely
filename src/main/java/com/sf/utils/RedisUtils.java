@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * @Description:
@@ -35,5 +36,18 @@ public class RedisUtils {
      */
     public static void setRedisCache(String key, String value) {
         staticStringRedisTemplate.opsForValue().set(key, value);
+    }
+
+
+    /**
+     * 获得用户id
+     *
+     * @param token
+     * @return
+     */
+    public static Integer getCurrentUserId(String token) {
+        //从redis中取出当前用户对象
+        Map<Object, Object> entries = staticStringRedisTemplate.opsForHash().entries(token);
+        return Integer.valueOf((String) entries.get("id"));
     }
 }
