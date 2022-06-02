@@ -35,4 +35,8 @@ public interface Constants {
      */
     Integer USER_REDIS_TIMEOUT = 7200;
 
+    /**
+     * 用户Token失效
+     */
+    Integer CODE_999 = 999;
 }

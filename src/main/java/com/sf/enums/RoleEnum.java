@@ -1,4 +1,4 @@
-package com.sf.common;
+package com.sf.enums;
 
 /**
  * @Description:

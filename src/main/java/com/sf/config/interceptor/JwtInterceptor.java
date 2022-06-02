@@ -10,10 +10,13 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.config.AuthAccess;
+import com.sf.controller.UserController;
 import com.sf.entity.User;
 import com.sf.exception.ServiceException;
 import com.sf.service.IUserService;
 import org.omg.CORBA.StringSeqHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,6 +27,8 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @Description:
@@ -32,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 
 public class JwtInterceptor implements HandlerInterceptor {
+    private static final Logger log = LoggerFactory.getLogger(JwtInterceptor.class);
 
     @Resource
     private IUserService userService;
@@ -84,15 +90,23 @@ public class JwtInterceptor implements HandlerInterceptor {
 
         //以TOKEN_PREFIX+token取值，判断TOKEN是否合法
         //String tFromRedis = stringRedisTemplate.opsForValue().get(StringConst.TOKEN_PREFIX + token);
-        String tokenFromRedis = stringRedisTemplate.opsForValue().get(token);
-        if (tokenFromRedis != null) {
+        //String tokenFromRedis = null;
+
+
+
+        Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(token);
+
+
+        if (!entries.isEmpty()) {
+            //如果能查到 重置过期时长
+            stringRedisTemplate.expire(token, Constants.USER_REDIS_TIMEOUT, TimeUnit.SECONDS);
             return true;
             //String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
             //if (token.equals(tokenFromRedis)) {
             //    return true;
             //}
         } else {
-            throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
+            throw new ServiceException(Constants.CODE_999, "token验证失败,请重新登录");
         }
 
 
