@@ -75,7 +75,7 @@ public class UserController {
         return Result.success(userService.page(new Page<>(pageNum, pageSize)));
     }
 
-    @ApiOperation(value = "用户登录", notes = "参数：username/email + password", httpMethod = "POST")
+    @ApiOperation(value = "用户登录", notes = "必须参数：username/email + password", httpMethod = "POST")
     @PostMapping("/login")
     public Result userLogin(@RequestBody UserDTO userDTO) {
         if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getPassword())) {
@@ -85,7 +85,7 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "用户忘记密码", notes = "参数：email+password+code", httpMethod = "POST")
+    @ApiOperation(value = "用户忘记密码", notes = "必须参数：email+password+code", httpMethod = "POST")
     @PostMapping("/pwdReset")
     public Result userPwdReset(@RequestBody UserDTO userDTO) {
         if (StrUtil.isNotBlank(userDTO.getEmail()) && StrUtil.isNotBlank(userDTO.getPassword()) &&
@@ -97,17 +97,17 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "用户信息修改", notes = "必须的参数：username, email, code", httpMethod = "POST")
+    @ApiOperation(value = "用户信息修改", notes = "必须参数：token+code", httpMethod = "POST")
     @PostMapping("/infoModify")
     public Result userInfoModify(@RequestBody UserDTO userDTO) {
-        if (StrUtil.isNotBlank(userDTO.getEmail()) && StrUtil.isNotBlank(userDTO.getCode())) {
+        if (StrUtil.isNotBlank(userDTO.getToken()) && StrUtil.isNotBlank(userDTO.getCode())) {
             return Result.success(userService.userInfoModify(userDTO));
         } else {
             return Result.error(Constants.CODE_400, "参数异常!");
         }
     }
 
-    @ApiOperation(value = "用户注册", notes = "新用户注册", httpMethod = "POST")
+    @ApiOperation(value = "用户注册", notes = "必须参数：username+email+password+code", httpMethod = "POST")
     @PostMapping("/register")
     public Result userRegister(@RequestBody UserDTO userDTO) {
         if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getEmail()) &&
@@ -119,7 +119,7 @@ public class UserController {
     }
 
     @AuthAccess
-    @ApiOperation(value = "发送邮箱验证码", notes = "action:具体操作，例如emailRegister(注册邮件);email为目标邮箱", httpMethod = "POST")
+    @ApiOperation(value = "发送邮箱验证码", notes = "action:emailRegister(注册邮件)/emailPwdReset(忘记密码)/emailInfoModify(信息修改);email为目标邮箱", httpMethod = "POST")
     @PostMapping("/emailCode/{action}/{email}")
     public Result sendEmailCode(@PathVariable String action, @PathVariable String email) {
         if (StrUtil.isNotBlank(action) && StrUtil.isNotBlank(email)) { // 检验参数是否均不为空
