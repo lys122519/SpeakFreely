@@ -61,7 +61,7 @@ public class RedisUtils {
             return id;
         } catch (Exception e) {
             log.info(token);
-            throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
+            throw new ServiceException(Constants.CODE_999, "token验证失败,请重新登录");
         }
     }
 
@@ -82,7 +82,7 @@ public class RedisUtils {
             return value;
         } catch (Exception e) {
             log.info(token);
-            throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
+            throw new ServiceException(Constants.CODE_999, "token验证失败,请重新登录");
         }
     }
 
@@ -96,7 +96,7 @@ public class RedisUtils {
         //从redis中取出当前用户对象的某个属性
         Map<Object, Object> entries = staticStringRedisTemplate.opsForHash().entries(token);
         if (entries.size() == 0) {// redis中获取不到token对应的用户信息则抛出异常
-            throw new ServiceException(Constants.CODE_400, "token验证失败,请重新登录");
+            throw new ServiceException(Constants.CODE_999, "token验证失败,请重新登录");
         } else {
             return entries;
         }

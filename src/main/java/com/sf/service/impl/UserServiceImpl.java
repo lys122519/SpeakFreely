@@ -147,7 +147,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public UserDTO emailModify(UserDTO userDTO) {
         // 通过token查询redis中的用户信息
-        Map<Object, Object> userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
         String email = userDTO.getEmail(); // 从redis缓存中获取email
         if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
             // 检验新邮箱是否被绑定
@@ -156,7 +155,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             }
             User user = new User();
             user.setEmail(email); // 设置用户邮箱为新邮箱
-            user.setId(Integer.valueOf((String) userFromRedis.get("id"))); // 设置id
+            user.setId(RedisUtils.getCurrentUserId(userDTO.getToken())); // 设置id
             userMapper.updateById(user); // 将更新同步到数据库
             // 修改成功，删除redis缓存中对应的验证码信息
             stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);

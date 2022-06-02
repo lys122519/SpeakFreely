@@ -128,7 +128,7 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "邮箱换绑", notes = "必须参数：token+email+code", httpMethod = "POST")
+    @ApiOperation(value = "邮箱换绑", notes = "必须参数：email+code", httpMethod = "POST")
     @PostMapping("/emailModify")
     public Result<UserDTO> emailModify(@RequestBody UserDTO userDTO) {
         userDTO.setToken(TokenUtils.getToken());
