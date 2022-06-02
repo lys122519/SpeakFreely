@@ -85,10 +85,11 @@ public class JwtInterceptor implements HandlerInterceptor {
         //以TOKEN_PREFIX+token取值，判断TOKEN是否合法
         String tFromRedis = stringRedisTemplate.opsForValue().get(StringConst.TOKEN_PREFIX + token);
         if (tFromRedis != null) {
-            String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
-            if (token.equals(tokenFromRedis)) {
-                return true;
-            }
+            return true;
+            //String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
+            //if (token.equals(tokenFromRedis)) {
+            //    return true;
+            //}
         } else {
             throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
         }
@@ -102,7 +103,7 @@ public class JwtInterceptor implements HandlerInterceptor {
         //} catch (JWTVerificationException e) {
         //    throw new ServiceException(Constants.CODE_401, "token验证失败,请重新登录");
         //}
-        return true;
+        //return true;
 
 
     }
