@@ -16,6 +16,7 @@ import com.sf.exception.ServiceException;
 import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,10 +103,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public UserDTO userInfoModify(UserDTO userDTO) { // 用户信息修改操作
         // 通过token查询redis中的用户信息
-        Map<Object, Object> userFromRedis = stringRedisTemplate.opsForHash().entries(userDTO.getToken());
-        if (userFromRedis.size() == 0) {// redis中获取不到token对应的用户信息则抛出异常
-            throw new ServiceException(Constants.CODE_400, "用户token已失效");
-        }
+        Map<Object, Object> userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
         if (StrUtil.isNotBlank(userDTO.getCode())) {
             String email = userFromRedis.get("email").toString(); // 从redis缓存中获取email
             if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
@@ -149,10 +147,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public UserDTO emailModify(UserDTO userDTO) {
         // 通过token查询redis中的用户信息
-        Map<Object, Object> userFromRedis = stringRedisTemplate.opsForHash().entries(userDTO.getToken());
-        if (userFromRedis.size() == 0) {// redis中获取不到token对应的用户信息则抛出异常
-            throw new ServiceException(Constants.CODE_400, "用户token已失效");
-        }
         String email = userDTO.getEmail(); // 从redis缓存中获取email
         if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
             // 检验新邮箱是否被绑定
@@ -161,8 +155,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             }
             User user = new User();
             user.setEmail(email); // 设置用户邮箱为新邮箱
-            user.setId(Integer.valueOf((String) userFromRedis.get("id"))); // 设置id
-            log.info(user.getId().toString());
+            user.setId(RedisUtils.getCurrentUserId(userDTO.getToken())); // 设置id
             userMapper.updateById(user); // 将更新同步到数据库
             // 修改成功，删除redis缓存中对应的验证码信息
             stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
