@@ -24,6 +24,8 @@ public interface StringConst {
      * 作为验证码获取的邮箱开头标记
      */
     String CODE_EMAIL = "codeEmail";
+
+    /*checkUser操作类型*/
     /**
      * 操作为发送邮件
      */
@@ -45,8 +47,25 @@ public interface StringConst {
      */
     String PWD_RESET = "pwdReset";
     /**
-     * 操作为信息修改
+     * 操作为邮箱换绑
      */
-    String INFO_MODIFY = "infoModify";
+    String MODIFY_EMAIL = "modifyEmail";
 
+    /*邮件发送操作*/
+    /**
+     * 邮件为注册邮件
+     */
+    String EMAIL_REGISTER = "emailRegister";
+    /**
+     * 邮件为换绑邮件
+     */
+    String EMAIL_MODIFY = "emailModify";
+    /**
+     * 邮件为密码重置邮件
+     */
+    String EMAIL_PWD_RESET = "emailPwdReset";
+    /**
+     * 邮件为信息修改邮件
+     */
+    String EMAIL_INFO_MODIFY = "emailInfoModify";
 }
