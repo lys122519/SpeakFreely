@@ -51,7 +51,7 @@ public class TokenUtils {
                 //2小时后过期
                 .withExpiresAt(DateUtil.offsetHour(new Date(), 2))
                 //将16会随机数+sign+时间戳作为token密钥
-                .sign(Algorithm.HMAC256(RandomUtil.randomNumbers(16)+userId + DateUtil.date()));
+                .sign(Algorithm.HMAC256(RandomUtil.randomNumbers(16) + userId + DateUtil.date()));
     }
 
 
@@ -72,6 +72,17 @@ public class TokenUtils {
     //            //将sign+时间戳+作为token密钥
     //            .sign(Algorithm.HMAC256(DateUtil.date() + RandomUtil.randomNumbers(16)));
     //}
+
+    /**
+     * 获得header中的token
+     * @return
+     */
+    public static String getToken() {
+        // 通过RequestContextHolder获得到当前request
+        HttpServletRequest request = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
+        return request.getHeader("token");
+    }
+
 
     /**
      * 获取当前登录用户信息
