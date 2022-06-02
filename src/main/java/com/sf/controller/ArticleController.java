@@ -1,6 +1,7 @@
 package com.sf.controller;
 
 import cn.hutool.core.date.DateUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
 import com.sf.utils.TokenUtils;
@@ -38,46 +39,48 @@ public class ArticleController {
 
     @PostMapping
     @ApiOperation(value = "新增/修改接口")
-    public Result save(@RequestBody Article article) {
+    public Result<Void> save(@RequestBody Article article) {
 
         if (article.getId() == null) {
             //新增
             article.setTime(DateUtil.now());
             article.setUserId(TokenUtils.getCurrentUser().getId());
         }
-
-        return Result.success(articleService.saveOrUpdate(article));
+        articleService.saveOrUpdate(article);
+        return Result.success();
     }
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "根据id删除")
-    public Result delete(@PathVariable Integer id) {
-        return Result.success(articleService.removeById(id));
+    public Result<Void> delete(@PathVariable Integer id) {
+        articleService.removeById(id);
+        return Result.success();
     }
 
     @PostMapping("/del/batch")
     @ApiOperation(value = "批量删除")
-    public Result deleteBatch(@RequestBody List<Integer> ids) {
-        return Result.success(articleService.removeBatchByIds(ids));
+    public Result<Void> deleteBatch(@RequestBody List<Integer> ids) {
+        articleService.removeBatchByIds(ids);
+        return Result.success();
     }
 
     @GetMapping("/{id}")
     @ApiOperation(value = "根据id查找一个")
-    public Result findOne(@PathVariable Integer id) {
+    public Result<Article> findOne(@PathVariable Integer id) {
         return Result.success(articleService.getById(id));
     }
 
     @GetMapping
     @ApiOperation(value = "查找所有")
-    public Result findAll() {
+    public Result<List<Article>> findAll() {
         return Result.success(articleService.list());
     }
 
     @GetMapping("/page")
     @ApiOperation(value = "分页查找")
-    public Result findPage(@RequestParam Integer pageNum,
-                           @RequestParam Integer pageSize,
-                           @RequestParam(defaultValue = "") String name) {
+    public Result<IPage<Article>> findPage(@RequestParam Integer pageNum,
+                                           @RequestParam Integer pageSize,
+                                           @RequestParam(defaultValue = "") String name) {
 
         Page<Article> page = articleService.findPage(new Page<>(pageNum, pageSize), name);
         return Result.success(page);

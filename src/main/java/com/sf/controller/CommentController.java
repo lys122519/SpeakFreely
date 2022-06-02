@@ -1,5 +1,6 @@
 package com.sf.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
 import io.swagger.annotations.Api;
@@ -40,7 +41,7 @@ public class CommentController {
 
     @PostMapping
     @ApiOperation(value = "新增/修改接口")
-    public Result save(@RequestBody Comment comment) {
+    public Result<Void> save(@RequestBody Comment comment) {
         if (comment.getId() == null) {
             //新增
             commentService.saveComment(comment);
@@ -51,38 +52,40 @@ public class CommentController {
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "根据id删除")
-    public Result delete(@PathVariable Integer id) {
-        return Result.success(commentService.removeById(id));
+    public Result<Void> delete(@PathVariable Integer id) {
+        commentService.removeById(id);
+        return Result.success();
     }
 
     @PostMapping("/del/batch")
     @ApiOperation(value = "批量删除")
-    public Result deleteBatch(@RequestBody List<Integer> ids) {
-        return Result.success(commentService.removeBatchByIds(ids));
+    public Result<Void> deleteBatch(@RequestBody List<Integer> ids) {
+        commentService.removeBatchByIds(ids);
+        return Result.success();
     }
 
     @GetMapping("/{id}")
     @ApiOperation(value = "根据id查找一个")
-    public Result findOne(@PathVariable Integer id) {
+    public Result<Comment> findOne(@PathVariable Integer id) {
         return Result.success(commentService.getById(id));
     }
 
     @GetMapping
     @ApiOperation(value = "查找所有")
-    public Result findAll() {
+    public Result<List<Comment>> findAll() {
         return Result.success(commentService.list());
     }
 
     @GetMapping("/page")
     @ApiOperation(value = "分页查找")
-    public Result findPage(@RequestParam Integer pageNum,
-                           @RequestParam Integer pageSize) {
+    public Result<IPage<Comment>> findPage(@RequestParam Integer pageNum,
+                                           @RequestParam Integer pageSize) {
         return Result.success(commentService.page(new Page<>(pageNum, pageSize)));
     }
 
     @GetMapping("/tree/{articleId}")
     @ApiOperation(value = "根据文章id查找评论")
-    public Result findTree(@PathVariable Integer articleId) {
+    public Result<List<Comment>> findTree(@PathVariable Integer articleId) {
 
         List<Comment> replyList = commentService.findReply(articleId);
 
