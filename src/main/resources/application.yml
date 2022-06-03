@@ -14,6 +14,20 @@ spring:
       url: jdbc:mysql://localhost:3306/speakfreely?serverTimeZone=GMT%2B8
       username: root
 
+      initial-size: 10
+      min-idle: 20
+      max-active: 30
+      max-wait: 60000
+      time-between-eviction-runs-millis: 60000
+      min-evictable-idle-time-millis: 300000
+      validationQuery: SELECT 1 FROM DUAL
+      testWhileIdle: true
+      testOnBorrow: false
+      testOnReturn: false
+      poolPreparedStatements: true
+
+
+
   redis:
     host: localhost
     port: 6379
@@ -79,7 +93,7 @@ files:
   upload:
     # 临时存放路径
     path: E:/desktop/file/
-#    path: /root/file/
+    #    path: /root/file/
     ak: 3ZRRSHSVDVJNQB4K9Q2F
     sk: onWB4AxC1DCHQ74VSRGi6lLsnRfr5CP1ViIZ43ZU
     endpoint: obs.cn-north-4.myhuaweicloud.com

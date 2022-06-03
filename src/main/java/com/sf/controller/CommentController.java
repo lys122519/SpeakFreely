@@ -67,6 +67,15 @@ public class CommentController {
         return Result.success();
     }
 
+    @GetMapping("/findUserComment")
+    @ApiOperation(value = "查找用户所有评论")
+    public Result<List<Comment>> findUserCommentById(@RequestParam Integer pageNum,
+                                                     @RequestParam Integer pageSize
+    ) {
+
+        return Result.success(commentService.findUserComment(new Page<>(pageNum, pageSize)));
+    }
+
     @GetMapping("/{id}")
     @ApiOperation(value = "根据id查找一个")
     public Result<Comment> findOne(@PathVariable Integer id) {

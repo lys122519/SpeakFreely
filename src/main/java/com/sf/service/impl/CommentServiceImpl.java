@@ -3,9 +3,12 @@ package com.sf.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.entity.Comment;
 import com.sf.entity.dto.CommentDto;
 import com.sf.mapper.CommentMapper;
+import com.sf.mapper.UserMapper;
 import com.sf.service.ICommentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.RedisUtils;
@@ -40,9 +43,19 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+
+    @Resource
+    private UserMapper userMapper;
+
+    /**
+     * 保存评论
+     *
+     * @param commentDto
+     */
     @Override
     public void saveComment(CommentDto commentDto) {
-        commentDto.setUserId(RedisUtils.getCurrentUserId(commentDto.getToken()));
+
+        commentDto.setUserId(RedisUtils.getCurrentUserId(TokenUtils.getToken()));
         commentDto.setTime(DateUtil.now());
 
 
@@ -70,7 +83,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      */
     @Override
     public void updateComment(CommentDto commentDto) {
-        commentDto.setUserId(RedisUtils.getCurrentUserId(commentDto.getToken()));
+        commentDto.setUserId(RedisUtils.getCurrentUserId(TokenUtils.getToken()));
 
         Comment comment = new Comment();
         BeanUtil.copyProperties(commentDto, comment, true);
@@ -123,36 +136,65 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         queryWrapper.eq("id", id).or().eq("pid", id).or().eq("origin_id", id);
         commentMapper.delete(queryWrapper);
 
-        //commentMapper.deleteById(id);
-        //
-        //QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
-        ////级联删除
-        //queryWrapper.eq("pid", id).or().eq("origin_id", id);
-        //List<Comment> comments = commentMapper.selectList(queryWrapper);
-        //for (Comment comment : comments) {
-        //    commentMapper.deleteById(comment);
-        //}
-
     }
 
+    /**
+     * 根据id批量删除
+     *
+     * @param ids
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteBatchByIds(List<Integer> ids) {
-        commentMapper.deleteBatchIds(ids);
+
         QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
-        List<Comment> commentList = commentMapper.selectBatchIds(ids);
-        Comment comment1 = commentMapper.selectById(ids.get(1));
 
-        List<Comment> cascadeList = commentList.stream().filter(comment -> (comment.getOriginId() != null && comment.getPid() != null)).collect(Collectors.toList());
-        commentMapper.deleteBatchIds(cascadeList);
-        //for (Integer id : ids) {
-        //    QueryWrapper<Comment> queryWrapper = new QueryWrapper<>();
-        //    queryWrapper.eq("id", id).or().eq("pid", id).or().eq("origin_id", id);
-        //    commentMapper.delete(queryWrapper);
-        //}
+        //循环ids数组删除pid=id或origin_id=id
+        for (Integer id : ids) {
+            queryWrapper.eq("pid", id).or().eq("origin_id", id);
+            commentMapper.delete(queryWrapper);
+        }
 
+        commentMapper.deleteBatchIds(ids);
 
     }
 
+    /**
+     * 查找用户所有评论
+     *
+     * @param page
+     * @return
+     */
+    @Override
+    public List<Comment> findUserComment(Page<List<Comment>> page) {
+        Integer currentUserId = RedisUtils.getCurrentUserId(TokenUtils.getToken());
 
+        //当前用户的所有评论
+        List<Comment> comments = commentMapper.selectUserComment(page, currentUserId);
+
+        //当前用户父级不为空的评论
+        List<Comment> originList = comments.stream().filter(comment -> (comment.getOriginId() != null
+                && comment.getPid() != null)).collect(Collectors.toList());
+
+        for (Comment comment : originList) {
+
+            Integer pid = comment.getPid();
+            if (pid != null) {
+                //查找到父级评论
+                Comment pComment = commentMapper.selectById(pid);
+                Integer userId = pComment.getUserId();
+                String nickname = userMapper.selectById(userId).getNickname();
+
+                //将父级id和昵称赋值给当前comment
+                comment.setpNickName(nickname);
+                comment.setpUserId(userId);
+            }
+
+
+        }
+
+
+        return comments;
+
+    }
 }

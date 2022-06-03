@@ -30,10 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.List;
 
 /**
@@ -94,8 +91,15 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
         //文件最终URL
         String finalUrl = "";
-        // 将获取到的文件存储到磁盘目录
-        file.transferTo(uploadFile);
+
+        try {
+            // 将获取到的文件存储到磁盘目录
+            file.transferTo(uploadFile);
+        } catch (FileNotFoundException e) {
+            log.warn("保存文件出错");
+            throw new ServiceException(Constants.CODE_600, "系统错误，请联系管理员");
+        }
+
         //获取文件md5
         String fileMD5 = SecureUtil.md5(uploadFile);
 
