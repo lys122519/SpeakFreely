@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.sf.enums.ArticleEnum;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -46,6 +47,9 @@ public class Article implements Serializable {
     @ApiModelProperty("是否删除")
     @TableLogic
     private Boolean deleted;
+
+    @ApiModelProperty("是否启用（即是否为草稿）")
+    private ArticleEnum enabled;
 
     @ApiModelProperty("文章标签")
     @TableField(exist = false)
@@ -113,6 +117,14 @@ public class Article implements Serializable {
 
     public void setTags(List<Tags> tags) {
         this.tags = tags;
+    }
+
+    public ArticleEnum getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(ArticleEnum enabled) {
+        this.enabled = enabled;
     }
 
     @Override
