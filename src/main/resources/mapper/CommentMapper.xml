@@ -8,8 +8,16 @@
                  left join tb_user as u
                            on c.user_id = u.id
         where c.article_id = #{articleId} and deleted = 0
-        order by id desc
+        order by c.id desc
 
 
+    </select>
+    <select id="selectUserComment" resultType="com.sf.entity.Comment">
+        select c.*, u.nickname, u.avatar_url
+        from tb_comment as c
+                 left join tb_user as u
+                           on c.user_id = u.id
+        where c.user_id = #{currentUserId} and deleted = 0
+        order by c.id desc
     </select>
 </mapper>
