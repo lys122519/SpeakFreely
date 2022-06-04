@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sf.mapper.TagsArticleMapper">
-
+    <insert id="batchAddList">
+        INSERT INTO tb_tag_article
+        (tag_id, article_id)
+        VALUES
+        <foreach collection="samples" item="sample" index="index" separator=",">
+            ( #{sample}, #{articleID})
+        </foreach>
+    </insert>
+    <delete id="batchRemoveList" parameterType="java.util.List">
+        DELETE FROM tb_tag_article
+        where article_id=#{articleID} AND tag_id in
+        <foreach collection="samples" item="sample" separator="," open="(" close=")">
+            #{sample}
+        </foreach>
+    </delete>
 </mapper>

@@ -1,5 +1,6 @@
 package com.sf.controller;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
@@ -70,4 +71,11 @@ public class TagsController {
                                         @RequestParam Integer pageSize) {
         return Result.success(tagsService.page(new Page<>(pageNum, pageSize)));
     }
+
+    @GetMapping("/top100")
+    @ApiOperation(value = "返回标签热度前100个",notes = "须验证用户token(保存在headers中)",httpMethod = "GET")
+    public Result<JSONObject> getTop100() {
+        return Result.success(tagsService.getTop100());
+    }
+
 }

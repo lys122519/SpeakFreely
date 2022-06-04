@@ -14,6 +14,7 @@ import com.sf.controller.UserController;
 import com.sf.entity.User;
 import com.sf.exception.ServiceException;
 import com.sf.service.IUserService;
+import com.sf.utils.RedisUtils;
 import org.omg.CORBA.StringSeqHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,21 +94,14 @@ public class JwtInterceptor implements HandlerInterceptor {
         //String tokenFromRedis = null;
 
 
-
-        Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(token);
-
-
-        if (!entries.isEmpty()) {
-            //如果能查到 重置过期时长
-            stringRedisTemplate.expire(token, Constants.USER_REDIS_TIMEOUT, TimeUnit.SECONDS);
-            return true;
-            //String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
-            //if (token.equals(tokenFromRedis)) {
-            //    return true;
-            //}
-        } else {
-            throw new ServiceException(Constants.CODE_999, "token验证失败,请重新登录");
-        }
+        RedisUtils.getUserRedis(token);
+        //如果能查到 重置过期时长
+        stringRedisTemplate.expire(token, Constants.USER_REDIS_TIMEOUT, TimeUnit.SECONDS);
+        return true;
+        //String tokenFromRedis = tFromRedis.split(StringConst.TOKEN_PREFIX)[1];
+        //if (token.equals(tokenFromRedis)) {
+        //    return true;
+        //}
 
 
         // 用户密码加签 验证 token

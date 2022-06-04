@@ -3,35 +3,33 @@ package com.sf.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.entity.User;
 import com.sf.entity.dto.UserDTO;
+import com.sf.enums.SexEnum;
 import com.sf.exception.ServiceException;
 import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.sf.utils.ObjectActionUtils;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
             }
             User user = new User(); // 实例化一个新用户对象
-            copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
+            ObjectActionUtils.copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
             userMapper.insert(user); // 向数据库插入新用户信息
             // 修改成功，删除redis缓存中对应的验证码信息
             stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
@@ -103,11 +101,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Override
     public UserDTO userInfoModify(UserDTO userDTO) { // 用户信息修改操作
         // 通过token查询redis中的用户信息
-        Map<Object, Object> userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
+        JSONObject userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
         if (StrUtil.isNotBlank(userDTO.getCode())) {
-            String email = userFromRedis.get("email").toString(); // 从redis缓存中获取email
+            String email = (String) userFromRedis.get("email"); // 从redis缓存中获取email
             if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
-                infoModify(userDTO, (String) userFromRedis.get("id")); // 调用更新方法更新用户信息
+                infoModify(userDTO, userFromRedis.get("id").toString()); // 调用更新方法更新用户信息
                 // 修改成功，删除redis缓存中对应的验证码信息
                 stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
                 return setToken(userDTO);// 更新token并返回
@@ -115,7 +113,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 throw new ServiceException(Constants.CODE_600, "验证码不匹配");
             }
         } else if (isBaseInfo(userDTO)) {
-            infoModify(userDTO, (String) userFromRedis.get("id")); // 调用更新方法更新用户信息
+            infoModify(userDTO, userFromRedis.get("id").toString()); // 调用更新方法更新用户信息
             return setToken(userDTO);// 更新token并返回
         } else {
             throw new ServiceException(Constants.CODE_600, "重要信息修改需要邮箱验证");
@@ -138,7 +136,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             throw new ServiceException(Constants.CODE_600, "请不要在此处修改邮箱");
         } else {
             User user = new User();
-            copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
+            ObjectActionUtils.copyByName(userDTO, user);// 通过浅拷贝更新用户信息,忽略空值
             user.setId(Integer.valueOf(userId)); // 设置id
             userMapper.updateById(user); // 将更新同步到数据库
         }
@@ -146,9 +144,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Override
     public UserDTO emailModify(UserDTO userDTO) {
-        // 通过token查询redis中的用户信息
-        String email = userDTO.getEmail(); // 从redis缓存中获取email
-        if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
+        String email = userDTO.getEmail(); // 获取新email
+        if (checkEmailCode(email, userDTO.getCode())) { // 验证新邮箱与验证码信息
             // 检验新邮箱是否被绑定
             if (checkUser(StringConst.MODIFY_EMAIL, "email", email) != null) {
                 throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
@@ -188,7 +185,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (!checkEmail(email)) { // 先检验邮箱格式
             throw new ServiceException(Constants.CODE_400, "邮箱格式错误"); // 格式不正确时抛出异常
         }
-
         String codeFromRedis = stringRedisTemplate.opsForValue().get(StringConst.CODE_EMAIL + email);
         if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
             String title = getEmailTitle(action, email); // 先获取对应邮件标题
@@ -240,36 +236,70 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if (token == null || token.equals("")) { // 检测用户对象是否存在token
             token = TokenUtils.getToken(userDTO.getId().toString());
             userDTO.setToken(token); // 不存在则设置用户token
-            Map<String, String> userMap = new HashMap<String, String>(); // 构造map
-            userMap.put("id", String.valueOf(userDTO.getId())); // 将用户信息拷贝到用户redis对象
-            userMap.put("username", userDTO.getUsername());
-            userMap.put("email", userDTO.getEmail());
             //将用户缓存存入redis
-            stringRedisTemplate.opsForHash().putAll(token, userMap);
+            RedisUtils.objToRedis(token, userDTO, Constants.USER_REDIS_TIMEOUT);
         } else {//根据token获取redis中的用户信息
-            Map<Object, Object> userFromRedis = stringRedisTemplate.opsForHash().entries(token);
+            JSONObject userFromRedis = RedisUtils.getUserRedis(token);
             setUserRedis(userDTO, userFromRedis); // 用户redis缓存同步
             //将用户缓存存入redis
-            stringRedisTemplate.opsForHash().putAll(token, userFromRedis);
+            RedisUtils.objToRedis(token, userFromRedis, Constants.USER_REDIS_TIMEOUT);
         }
-        stringRedisTemplate.expire(token, Constants.USER_REDIS_TIMEOUT, TimeUnit.SECONDS); // 重置过期时长
-
         return userDTO;
     }
 
     /*将用户信息中的id、username、email与用户的redis缓存同步*/
-    public void setUserRedis(UserDTO userDTO, Map<Object, Object> userFromRedis) {
+    public void setUserRedis(UserDTO userDTO, JSONObject userFromRedis) {
         // 将用户信息拷贝到用户redis对象
         if (userDTO.getId() == null) { // id只能取不能更新
-            userDTO.setId(Integer.valueOf((String) userFromRedis.get("id")));
+            userDTO.setId(Integer.valueOf(userFromRedis.get("id").toString()));
         }
         if (StrUtil.isBlank(userDTO.getUsername())) { // username只能取不能更新
-            userDTO.setUsername(String.valueOf(userFromRedis.get("username")));
+            userDTO.setUsername((String) userFromRedis.get("username"));
         }
         if (StrUtil.isBlank(userDTO.getEmail())) { // 取邮箱信息
             userDTO.setEmail(String.valueOf(userFromRedis.get("email")));
         } else { // 邮箱可以被更新(邮箱换绑)，因此其他情况下的信息修改不应当涉及到邮箱信息(后台须加验证)
-            userFromRedis.put("email", userDTO.getEmail());
+            userFromRedis.set("email", userDTO.getEmail());
+        }
+        if (StrUtil.isBlank(userDTO.getPassword())) { // 取密码信息
+            userDTO.setPassword(String.valueOf(userFromRedis.get("password")));
+        } else {
+            userFromRedis.set("password", userDTO.getPassword());
+        }
+        if (StrUtil.isBlank(userDTO.getNickname())) { // 取昵称信息
+            userDTO.setNickname(String.valueOf(userFromRedis.get("nickname")));
+        } else {
+            userFromRedis.set("nickname", userDTO.getNickname());
+        }
+        if (StrUtil.isBlank(userDTO.getPhone())) { // 取手机号信息
+            userDTO.setPhone(String.valueOf(userFromRedis.get("phone")));
+        } else {
+            userFromRedis.set("phone", userDTO.getPhone());
+        }
+        if (userDTO.getSex()==null) { // 取性别信息
+            userDTO.setSex(userFromRedis.get("sex").equals(SexEnum.MAN)?SexEnum.MAN:SexEnum.WOMAN);
+        } else {
+            userFromRedis.set("sex", userDTO.getSex());
+        }
+        if (StrUtil.isBlank(userDTO.getAddress())) { // 取地址信息
+            userDTO.setAddress(String.valueOf(userFromRedis.get("address")));
+        } else {
+            userFromRedis.set("address", userDTO.getAddress());
+        }
+        if (StrUtil.isBlank(userDTO.getAvatarUrl())) { // 取头像信息
+            userDTO.setAvatarUrl(String.valueOf(userFromRedis.get("avatarUrl")));
+        } else {
+            userFromRedis.set("avatarUrl", userDTO.getAvatarUrl());
+        }
+        if (StrUtil.isBlank(userDTO.getRole())) { // 取角色信息
+            userDTO.setRole(String.valueOf(userFromRedis.get("role")));
+        } else {
+            userFromRedis.set("role", userDTO.getRole());
+        }
+        if (StrUtil.isBlank(userDTO.getToken())) { // 取token信息
+            userDTO.setToken(String.valueOf(userFromRedis.get("token")));
+        } else {
+            userFromRedis.set("token", userDTO.getToken());
         }
     }
 
@@ -320,52 +350,5 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*对象属性拷贝通用方法，例如：UserDTO ==> User*/
-    public static void copyByName(Object src, Object target) {
-        if (src == null || target == null) {
-            return;
-        }
-        try {
-            Map<String, Field> srcFieldMap = getAssignableFieldsMap(src);
-            Map<String, Field> targetFieldMap = getAssignableFieldsMap(target);
-            for (String srcFieldName : srcFieldMap.keySet()) {
-                Field srcField = srcFieldMap.get(srcFieldName);
-                if (srcField == null) {
-                    continue;
-                }
-                // 变量名需要相同
-                if (!targetFieldMap.containsKey(srcFieldName)) {
-                    continue;
-                }
-                Field targetField = targetFieldMap.get(srcFieldName);
-                if (targetField == null) {
-                    continue;
-                }
-                // 类型需要相同
-                if (!srcField.getType().equals(targetField.getType())) {
-                    continue;
-                }
-                targetField.set(target, srcField.get(src));
-            }
-        } catch (Exception e) {
-            // 异常
-        }
-    }
 
-    private static Map<String, Field> getAssignableFieldsMap(Object obj) {
-        if (obj == null) {
-            return new HashMap<String, Field>();
-        }
-        Map<String, Field> fieldMap = new HashMap<String, Field>();
-        for (Field field : obj.getClass().getDeclaredFields()) {
-            // 过滤不需要拷贝的属性
-            if (Modifier.isStatic(field.getModifiers())
-                    || Modifier.isFinal(field.getModifiers())) {
-                continue;
-            }
-            field.setAccessible(true);
-            fieldMap.put(field.getName(), field);
-        }
-        return fieldMap;
-    }
 }

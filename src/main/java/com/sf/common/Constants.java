@@ -31,12 +31,17 @@ public interface Constants {
     Integer CODE_600 = 600;
 
     /**
+     * 用户Token失效
+     */
+    Integer CODE_999 = 999;
+
+    /**
      * redis用户信息缓存时长设置(单位为秒)
      */
     Integer USER_REDIS_TIMEOUT = 7200;
 
     /**
-     * 用户Token失效
+     * redis标签top100信息缓存时长设置(单位为秒)
      */
-    Integer CODE_999 = 999;
+    Integer TAG_REDIS_TIMEOUT = 3600;
 }

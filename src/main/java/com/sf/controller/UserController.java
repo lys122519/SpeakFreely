@@ -106,7 +106,7 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "用户信息修改", notes = "必须参数：token+code((nickname/phone/address/avatarUrl)修改不需要)", httpMethod = "POST")
+    @ApiOperation(value = "用户信息修改", notes = "必须参数：token(headers中);code((nickname/phone/address/avatarUrl)修改不需要)", httpMethod = "POST")
     @PostMapping("/infoModify")
     public Result<UserDTO> userInfoModify(@RequestBody UserDTO userDTO) {
         userDTO.setToken(TokenUtils.getToken());
@@ -128,7 +128,7 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "邮箱换绑", notes = "必须参数：email+code", httpMethod = "POST")
+    @ApiOperation(value = "邮箱换绑", notes = "必须参数：token(headers中);email+code", httpMethod = "POST")
     @PostMapping("/emailModify")
     public Result<UserDTO> emailModify(@RequestBody UserDTO userDTO) {
         userDTO.setToken(TokenUtils.getToken());

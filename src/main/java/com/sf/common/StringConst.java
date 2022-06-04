@@ -20,6 +20,30 @@ public interface StringConst {
      * redis key
      */
     String FILE_KEY = "FILES_FRONT_ALL";
+
+    /*---redis中的缓存key---*/
+
+    /*1.单个对象以String缓存*/
+    /*存的时候key为其唯一标识字符串，值为该对象转Json对象再转字符串*/
+    /*取的时候要将值转为JsonObject即可访问其属性值*/
+    /*每个对象key都不一样，但可以总结为以下几种情况*/
+    /*1.1 某个User的缓存以token为key, 值为其json字符串*/
+
+    /*2.一组对象以Map缓存*/
+    /*存的时候是以key,Map<对象的唯一标识字符串, 对象转Json对象再转字符串>形式*/
+    /*取的时候通过key得到的是一批对象的Map<Object, Object>形式*/
+    /*这种对象有公共的key，先根据key取出一组Map<Object，Object>*/
+    /*再根据其单个对象的唯一标识可以取出单个对象的json字符串形式*/
+
+    /**
+     * 2.1 TagTop100缓存(热度前100个Tags对象的Map缓存)
+     * Map<标签id, Tags转JsonObject再转String>
+     */
+    String TAGS_REDIS_KEY = "tagsMapRedis";
+
+    /*---redis中的缓存key结束---*/
+
+    /*---UserServiceImpl相关操作---*/
     /**
      * 作为验证码获取的邮箱开头标记
      */
@@ -68,4 +92,19 @@ public interface StringConst {
      * 邮件为信息修改邮件
      */
     String EMAIL_INFO_MODIFY = "emailInfoModify";
+    /*---UserServiceImpl相关操作结束---*/
+
+    /*---ArticleServiceImpl相关操作---*/
+
+    /*articleAction方法action标识*/
+    /**
+     * 操作为存草稿
+     */
+    String ARTICLE_DRAFT = "draft";
+    /**
+     * 操作为文章发布
+     */
+    String ARTICLE_PUBLISH = "publish";
+
+    /*---ArticleServiceImpl相关操作结束---*/
 }

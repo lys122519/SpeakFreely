@@ -1,9 +1,14 @@
 package com.sf.controller;
 
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sf.common.Constants;
 import com.sf.common.Result;
+import com.sf.common.StringConst;
+import com.sf.entity.dto.UserDTO;
+import com.sf.exception.ServiceException;
 import com.sf.utils.TokenUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -36,19 +41,6 @@ public class ArticleController {
 
     @Autowired
     private IArticleService articleService;
-
-    @PostMapping
-    @ApiOperation(value = "新增/修改接口")
-    public Result<Void> save(@RequestBody Article article) {
-
-        if (article.getId() == null) {
-            //新增
-            article.setTime(DateUtil.now());
-            article.setUserId(TokenUtils.getCurrentUser().getId());
-        }
-        articleService.saveOrUpdate(article);
-        return Result.success();
-    }
 
     @DeleteMapping("/{id}")
     @ApiOperation(value = "根据id删除")
@@ -84,5 +76,15 @@ public class ArticleController {
 
         Page<Article> page = articleService.findPage(new Page<>(pageNum, pageSize), name);
         return Result.success(page);
+    }
+
+    @ApiOperation(value = "文章(旧文章和旧草稿需id) 存草稿/文章发布", notes = "必须参数：action:draft(新草稿保存/旧草稿更新/旧文章存草稿)/publish(新文章发布/旧文章更新/旧草稿发布);Article(id或content至少有一项)", httpMethod = "POST")
+    @PostMapping("/action/{action}")
+    public Result<Article> articleAction(@PathVariable String action, @RequestBody Article article) {
+        if ((action.equals(StringConst.ARTICLE_DRAFT) || action.equals(StringConst.ARTICLE_PUBLISH) && StrUtil.isNotBlank(article.getContent())) && StrUtil.isNotBlank(article.getName())) {
+            return Result.success(articleService.articleAction(action, article));
+        } else {
+            throw new ServiceException(Constants.CODE_400, "参数异常!");
+        }
     }
 }

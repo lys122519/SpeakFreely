@@ -1,5 +1,6 @@
 package com.sf.service;
 
+import cn.hutool.json.JSONObject;
 import com.sf.entity.Tags;
 import com.baomidou.mybatisplus.extension.service.IService;
 
@@ -13,4 +14,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ITagsService extends IService<Tags> {
 
+    JSONObject getTop100(); // 返回热度前100的标签列表
 }
