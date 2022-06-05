@@ -44,4 +44,14 @@ public interface Constants {
      * redis标签top100信息缓存时长设置(单位为秒)
      */
     Integer TAG_REDIS_TIMEOUT = 3600;
+
+    /**
+     * redis 接口访问次数信息缓存时长设置(单位为秒)
+     */
+    Integer AVA_REDIS_TIMEOUT = 3600;
+
+    /**
+     * 接口访问次数达到xx 更新redis
+     */
+    Integer INTERFACE_COUNT = 200;
 }
