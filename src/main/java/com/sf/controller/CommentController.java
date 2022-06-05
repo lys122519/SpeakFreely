@@ -68,7 +68,7 @@ public class CommentController {
     }
 
     @GetMapping("/findUserComment")
-    @ApiOperation(value = "查找用户所有评论")
+    @ApiOperation(value = "查找用户所有评论(分页)")
     public Result<List<Comment>> findUserCommentById(@RequestParam Integer pageNum,
                                                      @RequestParam Integer pageSize
     ) {

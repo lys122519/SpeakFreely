@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
  * @author leung
  * @since 2022-05-31
  */
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> implements ICommentService {
     private static final Logger log = LoggerFactory.getLogger(CommentServiceImpl.class);
