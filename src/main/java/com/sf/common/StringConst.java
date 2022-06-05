@@ -21,6 +21,12 @@ public interface StringConst {
      */
     String FILE_KEY = "FILES_FRONT_ALL";
 
+    /**
+     * 接口监控key
+     */
+    String INTERFACE_ACTUATOR = "INTERFACE_ACTUATOR";
+
+
     /*---redis中的缓存key---*/
 
     /*1.单个对象以String缓存*/
