@@ -19,7 +19,7 @@ import springfox.documentation.service.Contact;
  * @date: 2022-05-30 16:18
  */
 @Configuration
-//@EnableKnife4j
+@EnableKnife4j
 @EnableSwagger2WebMvc
 
 // 访问路径 http://localhost:9090/doc.html#/home
