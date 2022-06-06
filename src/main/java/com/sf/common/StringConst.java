@@ -47,6 +47,14 @@ public interface StringConst {
      */
     String TAGS_REDIS_KEY = "tagsMapRedis";
 
+
+    /*3.一组对象以List缓存(实测同样的数据比Map方式占内存，且理论上字典结构比列表结构存取速度快)*/
+    /*存的时候是以List<对象转Json对象再转字符串>形式*/
+    /*取的时候通过key得到的是一批对象的List<JsonString>形式*/
+    /*这种对象有公共的key，先根据key取出一组List<JsonString>*/
+    /*再遍历列表将其由JsonString还原为JsonObject*/
+
+
     /*---redis中的缓存key结束---*/
 
     /*---UserServiceImpl相关操作---*/

@@ -4,9 +4,11 @@ import cn.hutool.json.JSONObject;
 import com.sf.entity.Tags;
 import com.baomidou.mybatisplus.extension.service.IService;
 
+import java.util.List;
+
 /**
  * <p>
- *  服务类
+ * 服务类
  * </p>
  *
  * @author leung
@@ -14,5 +16,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ITagsService extends IService<Tags> {
 
-    JSONObject getTop100(); // 返回热度前100的标签列表
+    List<JSONObject> getTop100(); // 返回热度前100的标签列表
 }

@@ -69,18 +69,16 @@ public class ObjectActionUtils {
     }
 
     /**
-     *
      * 两个List集合操作(以整型为例)
-     *
      */
-    /*求List差集方法 list1 - list2*/
+    /*求List去重差集方法 list1 - list2*/
     public static List<Integer> listComplement(List<Integer> list1, List<Integer> list2) {
-        return list1.stream().filter(item -> !list2.contains(item)).collect(toList());
+        return list1.stream().filter(item -> !list2.contains(item)).distinct().collect(toList());
     }
 
-    /*求List交集方法 list1 ∩ list2*/
+    /*求List去重交集方法 list1 ∩ list2*/
     public static List<Integer> listIntersection(List<Integer> list1, List<Integer> list2) {
-        return list1.stream().filter(list2::contains).collect(toList());
+        return list1.stream().filter(list2::contains).distinct().collect(toList());
     }
 
     /*求List并集方法 list1 ∪ list2*/

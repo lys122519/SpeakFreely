@@ -2,13 +2,20 @@ package com.sf.controller;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Constants;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
+import com.sf.entity.dto.ArticleDTO;
 import com.sf.entity.dto.UserDTO;
 import com.sf.exception.ServiceException;
+import com.sf.mapper.ArticleMapper;
+import com.sf.mapper.TagsArticleMapper;
+import com.sf.mapper.TagsMapper;
+import com.sf.mapper.UserMapper;
+import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 
@@ -42,6 +50,15 @@ public class ArticleController {
     @Autowired
     private IArticleService articleService;
 
+    @Autowired
+    private ArticleMapper articleMapper;
+
+    @Autowired
+    private TagsMapper tagsMapper;
+
+    @Autowired
+    private TagsArticleMapper tagsArticleMapper;
+
     @DeleteMapping("/{id}")
     @ApiOperation(value = "根据id删除")
     public Result<Void> delete(@PathVariable Integer id) {
@@ -57,9 +74,43 @@ public class ArticleController {
     }
 
     @GetMapping("/{id}")
-    @ApiOperation(value = "根据id查找一个")
-    public Result<Article> findOne(@PathVariable Integer id) {
-        return Result.success(articleService.getById(id));
+    @ApiOperation(value = "根据文章id查找已发布文章(包含作者和标签信息)", notes = "用户已登录,请求路径包含文章id", httpMethod = "GET")
+    public Result<JSONObject> findOne(@PathVariable Integer id) {
+        JSONObject article = new JSONObject(articleMapper.getArticleByID(id)); // 获取文章信息(包含作者信息)
+        if (article.size() > 0) {// 有已发布文章才给标签
+            article.set("tags", tagsArticleMapper.getTagsByArticle(id)); // 获取标签列表
+        }
+        return Result.success(article);
+    }
+
+    @GetMapping("/self/{type}/{page}/{limit}")
+    @ApiOperation(value = "作者自身获取未被删除文章列表(包含作者和标签信息)", notes = "token(headers),type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> getSelfArticle(@PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
+        // 作者获取自身文章列表(包含作者信息)
+        Integer id = RedisUtils.getCurrentUserId(TokenUtils.getToken());// 根据token获取作者id
+        return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type));
+    }
+
+    @GetMapping("/author/{id}/{type}/{page}/{limit}")
+    @ApiOperation(value = "指定作者id获取文章列表(包含作者和标签信息)", notes = "用户已登录,请求路径包含文章作者id,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> getAuthorArticle(@PathVariable Integer id, @PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
+        return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type));
+    }
+
+    @GetMapping("/{type}/{page}/{limit}")
+    @ApiOperation(value = "分页获取所有作者文章列表(包含作者和标签)", notes = "用户已登录,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> getArticleList(@PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
+        return Result.success(articleService.pageArticle(new Page<>(page, limit), null, type));
+    }
+
+    @GetMapping("/search/{page}/{limit}")
+    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> pageSearchArticle(@RequestBody ArticleDTO articleDTO, @PathVariable Integer page, @PathVariable Integer limit) {
+        if (articleDTO.getSearchTagID() != null && !articleDTO.getSearchTagID().toString().equals("") || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
+            return Result.success(articleService.pageSearchArticle(new Page<>(page, limit), articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
+        } else {
+            throw new ServiceException(Constants.CODE_400, "标签ID和文章标题不能全为空!");
+        }
     }
 
     @GetMapping
@@ -68,15 +119,6 @@ public class ArticleController {
         return Result.success(articleService.list());
     }
 
-    @GetMapping("/page")
-    @ApiOperation(value = "分页查找")
-    public Result<IPage<Article>> findPage(@RequestParam Integer pageNum,
-                                           @RequestParam Integer pageSize,
-                                           @RequestParam(defaultValue = "") String name) {
-
-        Page<Article> page = articleService.findPage(new Page<>(pageNum, pageSize), name);
-        return Result.success(page);
-    }
 
     @ApiOperation(value = "文章(旧文章和旧草稿需id) 存草稿/文章发布", notes = "必须参数：action:draft(新草稿保存/旧草稿更新/旧文章存草稿)/publish(新文章发布/旧文章更新/旧草稿发布);Article(id或content至少有一项)", httpMethod = "POST")
     @PostMapping("/action/{action}")

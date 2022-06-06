@@ -11,7 +11,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -105,6 +108,39 @@ public class RedisUtils {
     }
 
     /**
+     * 将List[jsonObjectString]存入redis并设置时长(S)
+     */
+    public static void listToRedis(String key, List<JSONObject> jsonList, Integer TIMEOUT) {
+        if (Boolean.TRUE.equals(staticStringRedisTemplate.hasKey(key))) { // 如果有这个键存在
+            staticStringRedisTemplate.opsForList().trim(key, 0, 0);// 进行裁剪清空
+        }
+        for (JSONObject obj : jsonList) {// 遍历列表将元素向右压入redis原List队列
+            staticStringRedisTemplate.opsForList().rightPush(key, obj.toString());
+        }
+        staticStringRedisTemplate.expire(key, TIMEOUT, TimeUnit.SECONDS);
+    }
+
+    /**
+     * 获得redis中的一组List缓存对象(取出的为List<String>)
+     */
+    public static List<String> listFromRedis(String key) {
+        //从redis中取出对应Map缓存
+        return staticStringRedisTemplate.opsForList().range(key, 0, -1);
+    }
+
+    /**
+     * 将 List<jsonString> 列表 还原为 List<JSONObject>
+     */
+    public static List<JSONObject> jsonListFromList(List<String> strList) {
+        //从redis中取出的List为 List<String>，将列表中的值还原为 json对象列表 返回
+        List<JSONObject> resultList = new ArrayList<>();
+        for (String obj : strList) {
+            resultList.add(new JSONObject(obj));
+        }
+        return resultList;
+    }
+
+    /**
      * 将Map<唯一标识字符串, 对象转json对象再转字符串>存入redis并设置时长(S)
      */
     public static void mapToRedis(String key, Map<Object, Object> mapObject, Integer TIMEOUT) {
@@ -130,5 +166,17 @@ public class RedisUtils {
             resultJson.set((String) key, new JSONObject(mapObject.get(key)));
         }
         return resultJson;
+    }
+
+    /**
+     * 将从redis取出的Map<Object, Object>对象转换成 json对象列表
+     */
+    public static List<JSONObject> jsonListFromMap(Map<Object, Object> mapObject) {
+        //从redis中取出的Map为 Map<Object, Object>，将所有数据项的值放入 json列表 返回
+        List<JSONObject> resultList = new ArrayList<>();
+        for (Object key : mapObject.keySet()) {
+            resultList.add(new JSONObject(mapObject.get(key)));
+        }
+        return resultList;
     }
 }
