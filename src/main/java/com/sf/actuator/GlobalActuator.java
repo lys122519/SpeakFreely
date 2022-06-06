@@ -27,9 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Component
 @Aspect
-public class ProjectAdvice {
+public class GlobalActuator {
 
-    private static final Logger log = LoggerFactory.getLogger(ProjectAdvice.class);
+    private static final Logger log = LoggerFactory.getLogger(GlobalActuator.class);
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -50,24 +50,12 @@ public class ProjectAdvice {
     /**
      * 在接口原有的方法执行前，将会首先执行此处的代码
      */
-    @Before("ProjectAdvice.servicePt()")
+    @Before("com.sf.actuator.GlobalActuator.servicePt()")
     public void doBefore(JoinPoint joinPoint) throws Throwable {
 
         startTime.set(System.currentTimeMillis());
         //获取传入目标方法的参数
         Object[] args = joinPoint.getArgs();
-
-
-        //if (countMap.size() == 0) {
-        //
-        //    Map<Object, Object> objectObjectMap = RedisUtils.mapFromRedis(StringConst.INTERFACE_ACTUATOR);
-        //    objectObjectMap.
-        //
-        //    //countMap = (ConcurrentHashMap<Object, Object>) redisTemplate.opsForHash().entries(StringConst.INTERFACE_ACTUATOR);
-        //}
-
-        //log.info("类名：{}", joinPoint.getSignature().getDeclaringType().getSimpleName());
-        //log.info("方法名:{}", joinPoint.getSignature().getName());
 
     }
 
@@ -76,7 +64,7 @@ public class ProjectAdvice {
      * 只有正常返回才会执行此方法
      * 如果程序执行失败，则不执行此方法
      */
-    @AfterReturning(returning = "returnVal", pointcut = "ProjectAdvice.servicePt()")
+    @AfterReturning(returning = "returnVal", pointcut = "com.sf.actuator.GlobalActuator.servicePt()")
     public void doAfterReturning(JoinPoint joinPoint, Object returnVal) throws Throwable {
 
         Signature signature = joinPoint.getSignature();
@@ -89,11 +77,10 @@ public class ProjectAdvice {
 
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 
-
-        if (countMap.size() == 0) {
-            JSONObject jsonObject = RedisUtils.objFromRedis(StringConst.INTERFACE_ACTUATOR);
-            if (jsonObject != null) {
-                synchronized (this) {
+        synchronized (this) {
+            if (countMap.size() == 0) {
+                JSONObject jsonObject = RedisUtils.objFromRedis(StringConst.INTERFACE_ACTUATOR);
+                if (jsonObject != null) {
                     Set<String> strings = jsonObject.keySet();
                     for (String string : strings) {
                         Object o = jsonObject.get(string);
@@ -107,10 +94,10 @@ public class ProjectAdvice {
         countMap.putIfAbsent(mapKey, 0);
         countMap.compute(mapKey, (key, value) -> (Integer) value + 1);
 
-        // 内存计数达到100 更新redis
-        if (increase == Constants.INTERFACE_COUNT) {
-            synchronized (this) {
 
+        synchronized (this) {
+            // 内存计数达到30 更新redis
+            if (increase == Constants.INTERFACE_COUNT) {
                 RedisUtils.objToRedis(StringConst.INTERFACE_ACTUATOR, countMap, Constants.AVA_REDIS_TIMEOUT);
                 //删除过期时间
                 stringRedisTemplate.persist(StringConst.INTERFACE_ACTUATOR);
@@ -127,7 +114,7 @@ public class ProjectAdvice {
     /**
      * 当接口报错时执行此方法
      */
-    @AfterThrowing(pointcut = "ProjectAdvice.servicePt()")
+    @AfterThrowing(pointcut = "com.sf.actuator.GlobalActuator.servicePt()")
     public void doAfterThrowing(JoinPoint joinPoint) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 

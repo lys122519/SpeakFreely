@@ -53,5 +53,5 @@ public interface Constants {
     /**
      * 接口访问次数达到xx 更新redis
      */
-    Integer INTERFACE_COUNT = 200;
+    Integer INTERFACE_COUNT = 30;
 }

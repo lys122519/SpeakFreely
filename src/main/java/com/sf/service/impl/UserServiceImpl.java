@@ -3,6 +3,7 @@ package com.sf.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -10,10 +11,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.sf.common.Constants;
 import com.sf.common.StringConst;
+import com.sf.entity.ActiveUser;
 import com.sf.entity.User;
 import com.sf.entity.dto.UserDTO;
 import com.sf.enums.SexEnum;
 import com.sf.exception.ServiceException;
+import com.sf.mapper.ActiveUserMapper;
 import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -30,8 +33,6 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,6 +56,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Resource
     private JavaMailSender javaMailSender; // 邮件发送器
 
+    @Resource
+    private ActiveUserMapper activeUserMapper;
+
+
     @Value("${spring.mail.username}")
     private String from; // 邮件发送者
 
@@ -67,6 +72,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             user = checkUser(StringConst.USERNAME_LOGIN, "username", username); // 用户名登录方式
         }
         if (user != null && password.equals(user.getPassword())) { // 用户存在且密码一致
+            //将用户登录信息存入活跃用户表
+            ActiveUser activeUser = new ActiveUser();
+            activeUser.setTime(DateUtil.now());
+            activeUser.setUserId(user.getId());
+            activeUserMapper.insert(activeUser);
+
+
             UserDTO loginUser = new UserDTO();
             // 通过浅拷贝设置用户信息,忽略空值
             BeanUtil.copyProperties(user, loginUser, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
@@ -276,8 +288,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else {
             userFromRedis.set("phone", userDTO.getPhone());
         }
-        if (userDTO.getSex()==null) { // 取性别信息
-            userDTO.setSex(userFromRedis.get("sex").equals(SexEnum.MAN)?SexEnum.MAN:SexEnum.WOMAN);
+        if (userDTO.getSex() == null) { // 取性别信息
+            userDTO.setSex(userFromRedis.get("sex").equals(SexEnum.MAN) ? SexEnum.MAN : SexEnum.WOMAN);
         } else {
             userFromRedis.set("sex", userDTO.getSex());
         }

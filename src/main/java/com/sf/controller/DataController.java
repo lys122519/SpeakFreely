@@ -1,9 +1,11 @@
 package com.sf.controller;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.json.JSONObject;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
 import com.sf.entity.dto.InterfaceDto;
+import com.sf.service.impl.ActiveUserServiceImpl;
 import com.sf.utils.RedisUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -12,9 +14,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @Description:
@@ -29,11 +31,13 @@ public class DataController {
 
     private static final Logger log = LoggerFactory.getLogger(DataController.class);
 
+    @Resource
+    private ActiveUserServiceImpl activeUserService;
 
-    @GetMapping("/interface/{intNumber}")
+    @GetMapping("/interface/{intCount}")
     @ApiOperation(value = "查找接口成功访问次数（默认倒序）")
     public Result<List<InterfaceDto>> findInterfaceCount(
-            @ApiParam(name = "intNumber", value = "需要的接口数") @PathVariable Integer intNumber
+            @ApiParam(name = "intCount", value = "需要的接口数") @PathVariable Integer intCount
     ) {
 
         HashMap<String, Integer> hashMap = new HashMap<>();
@@ -56,7 +60,7 @@ public class DataController {
 
         //排序后中的map中所有的key
         Object[] objects = sortedMap.keySet().toArray();
-        for (int i = 0; i < intNumber; i++) {
+        for (int i = 0; i < intCount; i++) {
             InterfaceDto interfaceDto = new InterfaceDto();
             interfaceDto.setName((String) objects[i]);
             interfaceDto.setCount(sortedMap.get((String) objects[i]));
@@ -66,4 +70,15 @@ public class DataController {
         return Result.success(resultList);
     }
 
+    @GetMapping("/activeUserCountByHour")
+    @ApiOperation(value = "查询系统活跃用户数(24小时内)")
+    public Result<ArrayList<Integer>> findActiveUserCount(
+
+    ) {
+        String startTime = DateUtil.now();
+
+        ArrayList<Integer> activeList = activeUserService.findActiveUserCountByHour(startTime);
+
+        return Result.success(activeList);
+    }
 }
