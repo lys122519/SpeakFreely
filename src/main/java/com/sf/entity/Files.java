@@ -34,11 +34,14 @@ public class Files implements Serializable {
     @ApiModelProperty("文件类型")
     private String type;
 
-    @ApiModelProperty("文件大小 kb	")
+    @ApiModelProperty("文件大小 kb ")
     private Long size;
 
     @ApiModelProperty("文件url")
     private String url;
+
+    @ApiModelProperty("文件上传时间")
+    private String time;
 
     @ApiModelProperty("文件md5")
     private String md5;
@@ -89,6 +92,14 @@ public class Files implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getTime() {
+        return time;
+    }
+
+    public void setTime(String time) {
+        this.time = time;
     }
 
     public String getMd5() {

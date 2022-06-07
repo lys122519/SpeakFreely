@@ -119,15 +119,15 @@ public class FilesController {
     }
 
 
-    @ApiOperation(value = "分页查找")
+    @ApiOperation(value = "分页查找", notes = "支持文件名，是否启用（默认所有），类型")
     @GetMapping("/page")
     public Result<IPage<Files>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
                                          @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                         @ApiParam(name = "fileName", value = "文件名称") @RequestParam(defaultValue = "") String fileName
+                                         @ApiParam(name = "files", value = "file对象") @RequestBody Files files
     ) {
-        IPage<Files> page = fileService.getPage(pageNum, pageSize, fileName);
+        IPage<Files> page = fileService.getPage(pageNum, pageSize, files);
         if (pageNum > page.getPages()) {
-            page = fileService.getPage((int) page.getPages(), pageSize, fileName);
+            page = fileService.getPage((int) page.getPages(), pageSize, files);
         }
         return Result.success(page);
     }

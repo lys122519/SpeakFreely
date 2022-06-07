@@ -1,12 +1,15 @@
 package com.sf.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.SecureUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,6 +24,7 @@ import com.sf.service.IFilesService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.OBSUtils;
 import com.sf.utils.RedisUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,20 +58,32 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 根据id删除文件
+     * @param id
+     */
     @Override
     public void deleteById(Integer id) {
         fileMapper.deleteById(id);
-
         setFilesRedisCache();
     }
 
+    /**
+     * 根据id批量删除
+     * @param ids
+     */
     @Override
     public void deleteBatchByIds(List<Integer> ids) {
         fileMapper.deleteBatchIds(ids);
-
         setFilesRedisCache();
     }
 
+    /**
+     * 上传文件
+     * @param file
+     * @return
+     * @throws IOException
+     */
     @Override
     public String uploadFile(MultipartFile file) throws IOException {
         String originalFilename = file.getOriginalFilename();
@@ -133,6 +149,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
         saveFile.setName(originalFilename);
         saveFile.setType(type);
+        saveFile.setTime(DateUtil.now());
         saveFile.setSize(size / 1024);
         saveFile.setMd5(fileMD5);
 
@@ -140,7 +157,6 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
         //存储完后删除文件
         uploadFile.delete();
-
 
         setFilesRedisCache();
 
@@ -152,18 +168,22 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
      *
      * @param pageNum
      * @param pageSize
-     * @param name
+     * @param files
      * @return
      */
     @Override
-    public IPage<Files> getPage(Integer pageNum, Integer pageSize, String name) {
-        QueryWrapper<Files> queryWrapper = new QueryWrapper<>();
-        queryWrapper.orderByDesc("id");
-        if (!"".equals(name)) {
-            queryWrapper.like("name", name);
-        }
+    public IPage<Files> getPage(Integer pageNum, Integer pageSize, Files files) {
+        LambdaQueryWrapper<Files> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+
+        lambdaQueryWrapper.like(Strings.isNotEmpty(files.getName()), Files::getName, files.getName());
+        lambdaQueryWrapper.eq(ObjectUtil.isNotNull(files.getEnabled()), Files::getEnabled, files.getEnabled());
+
+        lambdaQueryWrapper.like(Strings.isNotEmpty(files.getType()), Files::getType, files.getType());
+        //lambdaQueryWrapper.orderByDesc(Files::getTime);
+
+
         IPage<Files> page = new Page<>(pageNum, pageSize);
-        fileMapper.selectPage(page, queryWrapper);
+        fileMapper.selectPage(page, lambdaQueryWrapper);
         return page;
     }
 

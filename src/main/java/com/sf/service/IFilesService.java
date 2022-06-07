@@ -43,10 +43,10 @@ public interface IFilesService extends IService<Files> {
      * 分页查询
      * @param pageNum
      * @param pageSize
-     * @param name
+     * @param files
      * @return
      */
-    IPage<Files> getPage(Integer pageNum, Integer pageSize, String name);
+    IPage<Files> getPage(Integer pageNum, Integer pageSize, Files files);
 
     /**
      * 查找所有文件
