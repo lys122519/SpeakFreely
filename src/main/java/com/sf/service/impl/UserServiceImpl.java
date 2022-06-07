@@ -241,37 +241,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         Integer user_id = RedisUtils.getCurrentUserId(userDTO.getToken());// 获取当前用户ID
         // 请求url
         String url = "https://aip.baidubce.com/rest/2.0/face/v3/faceset/user/update";
-        try {// 构建人脸上传请求体json格式数据
-            JSONObject jsonUpload = new JSONObject();
-            jsonUpload.set("image", userDTO.getUserFace());
-            jsonUpload.set("group_id", "speakfreely");
-            jsonUpload.set("user_id", user_id);
-            jsonUpload.set("image_type", "BASE64");
-            jsonUpload.set("quality_control", "LOW");
-            jsonUpload.set("action_type", "REPLACE");
+        // 构建人脸上传请求体json格式数据
+        JSONObject jsonUpload = new JSONObject();
+        jsonUpload.set("image", userDTO.getUserFace());
+        jsonUpload.set("group_id", "speakfreely");
+        jsonUpload.set("user_id", user_id);
+        jsonUpload.set("image_type", "BASE64");
+        jsonUpload.set("quality_control", "LOW");
+        jsonUpload.set("action_type", "REPLACE");
 
 
-            // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
-            String accessToken = StringConst.BAIDU_ACCESS_TOKEN;
+        // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
+        String accessToken = StringConst.BAIDU_ACCESS_TOKEN;
 
-            String result = HttpUtil.post(url, accessToken, "application/json", jsonUpload.toString());
-            //log.info(result);
-            JSONObject jsonResult = new JSONObject(result);
-            if (jsonResult.get("error_msg").equals("SUCCESS")) { // 检测上传结果
-                jsonResult = new JSONObject(jsonResult.get("result"));
-                User user = new User();
-                // 设置用户人脸信息为人脸库中的人脸token值
-                user.setUserFace(jsonResult.get("face_token").toString());
-                user.setId(RedisUtils.getCurrentUserId(userDTO.getToken())); // 设置用户id
-                userMapper.updateById(user); // 将人脸token信息更新同步到数据库
-            } else { // 上传失败直接将失败结果返回
-                return jsonResult;
-            }
+        String result = null;
+        try {
+            result = HttpUtil.post(url, accessToken, "application/json", jsonUpload.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        //log.info(result);
+        JSONObject jsonResult = new JSONObject(result);
+        if (jsonResult.get("error_msg").equals("SUCCESS")) { // 检测上传结果
+            jsonResult = new JSONObject(jsonResult.get("result"));
+            User user = new User();
+            // 设置用户人脸信息为人脸库中的人脸token值
+            user.setUserFace(jsonResult.get("face_token").toString());
+            user.setId(RedisUtils.getCurrentUserId(userDTO.getToken())); // 设置用户id
+            userMapper.updateById(user); // 将人脸token信息更新同步到数据库
+        }  // 上传失败直接将失败结果返回
+        return jsonResult;
     }
+
 
     @Override
     public void userPwdReset(String email, String newPwd, String code) {
