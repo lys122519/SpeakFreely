@@ -276,8 +276,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else {
             userFromRedis.set("phone", userDTO.getPhone());
         }
-        if (userDTO.getSex()==null) { // 取性别信息
-            userDTO.setSex(userFromRedis.get("sex").equals(SexEnum.MAN)?SexEnum.MAN:SexEnum.WOMAN);
+        if (userDTO.getSex() == null) { // 取性别信息
+            userDTO.setSex(userFromRedis.get("sex").equals(SexEnum.MAN) ? SexEnum.MAN : SexEnum.WOMAN);
         } else {
             userFromRedis.set("sex", userDTO.getSex());
         }
@@ -349,6 +349,4 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return code.equals(codeFromRedis);
         }
     }
-
-
 }
