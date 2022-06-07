@@ -2,10 +2,14 @@ package com.sf.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.entity.Comment;
+import com.sf.entity.Files;
 import com.sf.entity.dto.CommentDto;
 import com.sf.mapper.CommentMapper;
 import com.sf.mapper.UserMapper;
@@ -13,6 +17,7 @@ import com.sf.service.ICommentService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -178,7 +183,6 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 && comment.getPid() != null)).collect(Collectors.toList());
 
         for (Comment comment : originList) {
-
             Integer pid = comment.getPid();
             if (pid != null) {
                 //查找到父级评论
@@ -190,12 +194,51 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 comment.setpNickName(nickname);
                 comment.setpUserId(userId);
             }
-
-
         }
-
-
         return comments;
 
     }
+
+    /**
+     * 分页查找
+     *
+     * @param pageNum
+     * @param pageSize
+     * @param comment
+     * @return
+     */
+    @Override
+    public IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment) {
+        Page<Comment> page = new Page<>(pageNum, pageSize);
+        commentMapper.findPage(page, comment.getContent());
+
+        return page;
+
+    }
+
+
+    ///**
+    // * 分页查找
+    // *
+    // * @param pageNum
+    // * @param pageSize
+    // * @param comment
+    // * @return
+    // */
+    //@Override
+    //public IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment) {
+    //    LambdaQueryWrapper<Comment> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+    //
+    //    lambdaQueryWrapper.like(Strings.isNotEmpty(comment.getContent()), Comment::getContent, comment.getContent());
+    //    //lambdaQueryWrapper.eq(ObjectUtil.isNotNull(comment.getEnabled()), Comment::getEnabled, comment.getEnabled());
+    //    //
+    //    //lambdaQueryWrapper.like(Strings.isNotEmpty(comment.getType()), Comment::getType, comment.getType());
+    //
+    //    IPage<Comment> page = new Page<>(pageNum, pageSize);
+    //    commentMapper.selectPage(page, lambdaQueryWrapper);
+    //
+    //
+    //    return page;
+    //
+    //}
 }

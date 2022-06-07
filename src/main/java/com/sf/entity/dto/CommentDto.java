@@ -52,9 +52,6 @@ public class CommentDto {
     @ApiModelProperty("用户头像")
     private String avatarUrl;
 
-    @ApiModelProperty("用户token")
-    private String token;
-
     public Integer getId() {
         return id;
     }
@@ -151,11 +148,4 @@ public class CommentDto {
         this.avatarUrl = avatarUrl;
     }
 
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
 }

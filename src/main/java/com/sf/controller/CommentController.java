@@ -3,9 +3,11 @@ package com.sf.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
+import com.sf.entity.Files;
 import com.sf.entity.dto.CommentDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +70,7 @@ public class CommentController {
     }
 
     @GetMapping("/findUserComment")
-    @ApiOperation(value = "查找用户所有评论(分页)")
+    @ApiOperation(value = "查找用户所有评论")
     public Result<List<Comment>> findUserCommentById(@RequestParam Integer pageNum,
                                                      @RequestParam Integer pageSize
     ) {
@@ -89,15 +91,22 @@ public class CommentController {
     }
 
     @GetMapping("/page")
-    @ApiOperation(value = "分页查找")
-    public Result<IPage<Comment>> findPage(@RequestParam Integer pageNum,
-                                           @RequestParam Integer pageSize) {
-        return Result.success(commentService.page(new Page<>(pageNum, pageSize)));
+    @ApiOperation(value = "分页查找", notes = "支持按内容查找")
+    public Result<IPage<Comment>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+                                           @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
+                                           @ApiParam(name = "comment", value = "Comment对象") @RequestBody Comment comment
+    ) {
+        IPage<Comment> page = commentService.getPage(pageNum, pageSize, comment);
+        if (pageNum > page.getPages()) {
+            page = commentService.getPage((int) page.getPages(), pageSize, comment);
+        }
+
+        return Result.success(page);
     }
 
     @GetMapping("/tree/{articleId}")
     @ApiOperation(value = "根据文章id查找评论")
-    public Result<List<Comment>> findTree(@PathVariable Integer articleId) {
+    public Result<List<Comment>> findTree(@ApiParam(name = "articleId", value = "文章id", required = true) @PathVariable Integer articleId) {
 
         List<Comment> replyList = commentService.findReply(articleId);
 
