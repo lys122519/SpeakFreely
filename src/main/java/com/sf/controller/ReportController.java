@@ -3,8 +3,11 @@ package com.sf.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
+import com.sf.entity.Comment;
+import com.sf.entity.dto.ReportDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +37,12 @@ public class ReportController {
     @PostMapping
     @ApiOperation(value = "新增/修改接口")
     public Result<Void> save(@RequestBody Report report) {
-        reportService.saveOrUpdate(report);
+        if (report.getId() == null) {
+            reportService.saveReport(report);
+        } else {
+            reportService.updateReport(report);
+        }
+
         return Result.success();
     }
 
@@ -58,16 +66,18 @@ public class ReportController {
         return Result.success(reportService.getById(id));
     }
 
-    @GetMapping
-    @ApiOperation(value = "查找所有")
-    public Result<List<Report>> findAll() {
-        return Result.success(reportService.list());
-    }
 
     @GetMapping("/page")
-    @ApiOperation(value = "分页查找")
-    public Result<IPage<Report>> findPage(@RequestParam Integer pageNum,
-                                          @RequestParam Integer pageSize) {
-        return Result.success(reportService.page(new Page<>(pageNum, pageSize)));
+    @ApiOperation(value = "分页查找", notes = "根据举报时间降序(根据内容，用户昵称，是否已处理)")
+    public Result<IPage<Report>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+                                          @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
+                                          @ApiParam(name = "ReportDto", value = "ReportDto对象") @RequestBody ReportDto reportDto
+    ) {
+        IPage<Report> page = reportService.getPage(pageNum, pageSize, reportDto);
+        if (pageNum > page.getPages()) {
+            page = reportService.getPage((int) page.getPages(), pageSize, reportDto);
+        }
+
+        return Result.success(page);
     }
 }

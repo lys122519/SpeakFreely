@@ -1,8 +1,10 @@
 package com.sf.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.entity.Comment;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.sf.entity.Files;
 import com.sf.entity.dto.CommentDto;
 
 import java.util.List;
@@ -59,4 +61,13 @@ public interface ICommentService extends IService<Comment> {
      * @param page
      */
     List<Comment> findUserComment(Page<List<Comment>> page);
+
+    /**
+     * 分页查找
+     * @param pageNum
+     * @param pageSize
+     * @param comment
+     * @return
+     */
+    IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment);
 }

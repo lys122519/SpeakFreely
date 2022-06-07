@@ -31,17 +31,17 @@ public class Report implements Serializable {
     @ApiModelProperty("举报人ID")
     private Integer userId;
 
-    @ApiModelProperty("违规文章ID")
+    @ApiModelProperty(value = "违规文章ID", required = true)
     private Integer articleId;
 
-    @ApiModelProperty("违规评论ID")
+    @ApiModelProperty(value = "违规评论ID", required = true)
     private Integer commentId;
 
-    @ApiModelProperty("举报理由")
+    @ApiModelProperty(value = "举报理由", required = true)
     private String content;
 
     @ApiModelProperty("举报时间")
-    private LocalDateTime time;
+    private String time;
 
     @ApiModelProperty("是否删除")
     private Boolean deleted;
@@ -90,11 +90,11 @@ public class Report implements Serializable {
         this.content = content;
     }
 
-    public LocalDateTime getTime() {
+    public String getTime() {
         return time;
     }
 
-    public void setTime(LocalDateTime time) {
+    public void setTime(String time) {
         this.time = time;
     }
 

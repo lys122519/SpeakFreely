@@ -2,4 +2,33 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sf.mapper.ReportMapper">
 
+    <select id="findPage" resultType="com.sf.entity.dto.ReportDto">
+        select t.*, u.nickname as nickname, c.content as comment_content, a.`name` as article_name
+        FROM tb_report as t
+        left join tb_user as u
+        on t.user_id = u.id
+        LEFT JOIN tb_comment as c
+        on t.comment_id = c.id
+        left join tb_article as a
+        on t.article_id = a.id
+        <where>
+            <if test="report.content!=null and report.content!=''">
+                and c.content like concat('%',#{report.content},'%')
+            </if>
+        </where>
+        <where>
+            <if test="report.nickname!=null and report.nickname!=''">
+                and u.nickname like concat('%',#{report.nickName},'%')
+            </if>
+        </where>
+        <where>
+            <if test="report.execd!=null and report.execd!=''">
+                and t.execd = #{report.execd}
+            </if>
+        </where>
+        and t.deleted = 0
+        order by t.time desc
+
+
+    </select>
 </mapper>
