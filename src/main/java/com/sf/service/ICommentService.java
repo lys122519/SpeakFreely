@@ -60,7 +60,7 @@ public interface ICommentService extends IService<Comment> {
      *
      * @param page
      */
-    List<Comment> findUserComment(Page<List<Comment>> page);
+    Page<Comment> findUserComment(Page<Comment> page);
 
     /**
      * 分页查找

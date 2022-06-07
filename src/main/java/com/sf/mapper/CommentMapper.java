@@ -1,9 +1,9 @@
 package com.sf.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.entity.Comment;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.sf.entity.dto.CommentDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -35,7 +35,7 @@ public interface CommentMapper extends BaseMapper<Comment> {
      * @param currentUserId
      * @return
      */
-    List<Comment> selectUserComment(Page<List<Comment>> page, @Param("currentUserId") Integer currentUserId);
+    List<Comment> selectUserComment(@Param("currentUserId") Integer currentUserId);
 
     /**
      * 分页查找

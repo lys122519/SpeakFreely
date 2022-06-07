@@ -31,6 +31,8 @@
         order by c.id desc
     </select>
 
+
+
     <select id="findPage" resultType="com.sf.entity.dto.CommentDto">
         select c.id,c.user_id,u.nickname,c.content,c.time,c.article_id
         from tb_comment as c

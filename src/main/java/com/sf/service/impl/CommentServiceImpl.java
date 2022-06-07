@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.entity.Comment;
+import com.sf.entity.dto.ArticleDTO;
 import com.sf.entity.dto.CommentDto;
 import com.sf.mapper.CommentMapper;
 import com.sf.mapper.UserMapper;
@@ -15,11 +16,14 @@ import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -115,7 +119,6 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                     //找到父级评论的用户id和用户昵称，并设置给当前回复对象
                     comment.setpUserId(v.getUserId());
                     comment.setpNickName(v.getNickname());
-
                 }));
             });
 
@@ -160,17 +163,17 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     }
 
     /**
-     * 查找用户所有评论
+     * 查找当前用户id所有评论
      *
      * @param page
      * @return
      */
     @Override
-    public List<Comment> findUserComment(Page<List<Comment>> page) {
+    public Page<Comment> findUserComment(Page<Comment> page) {
         Integer currentUserId = RedisUtils.getCurrentUserId(TokenUtils.getToken());
 
         //当前用户的所有评论
-        List<Comment> comments = commentMapper.selectUserComment(page, currentUserId);
+        List<Comment> comments = commentMapper.selectUserComment(currentUserId);
 
         //当前用户父级不为空的评论
         List<Comment> originList = comments.stream().filter(comment -> (comment.getOriginId() != null
@@ -189,7 +192,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 comment.setpUserId(userId);
             }
         }
-        return comments;
+        Page<Comment> commentPage = pageArticleList(page, comments);
+
+        return commentPage;
 
     }
 
@@ -210,6 +215,27 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     }
 
+    /**
+     * 对查询到的列表进行分页
+     * @param page
+     * @param records
+     * @return
+     */
+    public Page<Comment> pageArticleList(Page<Comment> page, List<Comment> records) {
+        // 根据文章总数设置分页数据总数
+        page.setTotal(records.size());
+        // 根据文章总数设置分页页码总数
+        page.setPages((records.size() + page.getSize() - 1) / page.getSize());
+        // 计算偏移量和切片位置下标(以获取指定页码的文章)
+        int offset = Math.toIntExact((page.getCurrent() - 1) * page.getSize());
+        int end = Math.toIntExact(page.getCurrent() * page.getSize());
+        if (end > records.size()) {
+            // 如果当前切片结束位置超出数据总数，将其置为总数
+            end = records.size();
+        }
+        // 将切片后的文章列表放入分页记录列表
+        return page.setRecords(records.subList(offset, end));
+    }
 
     ///**
     // * 分页查找
