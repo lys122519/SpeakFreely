@@ -73,8 +73,8 @@ public class TagsController {
     }
 
     @GetMapping("/top100")
-    @ApiOperation(value = "返回标签热度前100个",notes = "须验证用户token(保存在headers中)",httpMethod = "GET")
-    public Result<JSONObject> getTop100() {
+    @ApiOperation(value = "返回标签热度前100个", notes = "须验证用户token(保存在headers中)", httpMethod = "GET")
+    public Result<List<JSONObject>> getTop100() {
         return Result.success(tagsService.getTop100());
     }
 

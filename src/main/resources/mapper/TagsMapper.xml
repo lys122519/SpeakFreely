@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sf.mapper.TagsMapper">
+    <resultMap id="BaseResultMap" type="com.sf.entity.Tags">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="content" jdbcType="VARCHAR" property="content"/>
+        <result column="counts" jdbcType="BIGINT" property="counts"/>
+        <result column="version" jdbcType="BIGINT" property="version"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+        id, content, counts, version
+    </sql>
+
     <insert id="batchAddList" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO tb_tags
         (content,counts,`version`)

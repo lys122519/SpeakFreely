@@ -3,7 +3,6 @@
 <mapper namespace="com.sf.mapper.ArticleMapper">
 
     <select id="findPage" resultType="com.sf.entity.Article">
-
         select article.*,tb_user.nickname as username
         from article
         left join tb_user
@@ -13,5 +12,126 @@
                 and name like concat('%',#{name},'%')
             </if>
         </where>
+    </select>
+    <select id="getArticleByID" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT article.*,
+        author.nickname author_nickname, author.avatar_url author_avatar_url
+        FROM tb_article article, tb_user author
+        WHERE article.id = #{articleID} AND article.deleted=0 AND article.enabled=1
+        AND article.user_id = author.id
+    </select>
+    <select id="pageArticle" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT
+        article.*,
+        author.nickname author_nickname,
+        author.avatar_url author_avatar_url,
+        group_concat(tags.id ORDER BY tags.id SEPARATOR ';') AS 'tags_id',
+        group_concat(tags.content ORDER BY tags.id SEPARATOR ';') AS 'tags_content',
+        group_concat(tags.counts ORDER BY tags.id SEPARATOR ';') AS 'tags_counts'
+        FROM
+        tb_article article,
+        tb_user author,
+        tb_tag_article tagArticle,
+        tb_tags tags
+        WHERE article.id IN
+        (SELECT tb_tag_article.article_id
+        FROM tb_tag_article
+        WHERE tb_tag_article.tag_id = tb_tag_article.tag_id)
+        <if test="authorID!=null">
+            AND article.user_id = #{authorID}
+        </if>
+        <if test="authorID==null">
+            AND article.user_id = author.id
+        </if>
+        <if test="enabled!=null">
+            AND article.enabled=#{enabled}
+        </if>
+        AND article.deleted=0
+        AND article.id = tagArticle.article_id
+        AND tagArticle.tag_id = tags.id
+        GROUP BY article.id
+    </select>
+    <select id="pageArticleNullTag" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT
+        article.*,
+        author.nickname author_nickname,
+        author.avatar_url author_avatar_url,
+        null AS 'tags_id',
+        null AS 'tags_content',
+        null AS 'tags_counts'
+        FROM
+        tb_article article,
+        tb_user author
+        WHERE article.id NOT IN
+        (SELECT tb_tag_article.article_id
+        FROM tb_tag_article
+        WHERE tb_tag_article.tag_id = tb_tag_article.tag_id)
+        AND article.deleted=0
+        <if test="authorID!=null">
+            AND article.user_id = #{authorID}
+        </if>
+        <if test="authorID==null">
+            AND article.user_id = author.id
+        </if>
+        <if test="enabled!=null">
+            AND article.enabled=#{enabled}
+        </if>
+        GROUP BY article.id
+    </select>
+    <select id="pageSearchArticleByTag" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT article.*,
+        author.nickname author_nickname,
+        author.avatar_url author_avatar_url,
+        author.avatar_url author_avatar_url,
+        group_concat(tags.id ORDER BY tags.id SEPARATOR ';') AS 'tags_id',
+        group_concat(tags.content ORDER BY tags.id SEPARATOR ';') AS 'tags_content',
+        group_concat(tags.counts ORDER BY tags.id SEPARATOR ';') AS 'tags_counts'
+        FROM
+        tb_article article,
+        tb_user author,
+        tb_tag_article tagArticle,
+        tb_tags tags
+        WHERE
+        article.id IN
+        (SELECT tb_tag_article.article_id
+        FROM tb_tag_article
+        WHERE
+        <if test="tagID!=null">
+            tb_tag_article.tag_id = #{tagID}
+        </if>
+        <if test="tagID==null">
+            tb_tag_article.tag_id = tb_tag_article.tag_id
+        </if>)
+        AND article.user_id = author.id
+        AND tagArticle.article_id = article.id
+        AND tagArticle.tag_id = tags.id
+        AND article.deleted = 0
+        AND article.enabled = 1
+        <if test="articleTitle!=null">
+            AND article.name Like concat('%',#{articleTitle},'%')
+        </if>
+        GROUP BY article.id;
+    </select>
+    <select id="pageSearchArticleNullTag" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT article.*,
+        author.nickname author_nickname,
+        author.avatar_url author_avatar_url,
+        null AS 'tags_id',
+        null AS 'tags_content',
+        null AS 'tags_counts'
+        FROM
+        tb_article article,
+        tb_user author
+        WHERE article.id NOT IN
+        (SELECT tb_tag_article.article_id
+        FROM tb_tag_article
+        WHERE tb_tag_article.tag_id = tb_tag_article.tag_id)
+        AND article.user_id = author.id
+        AND article.deleted = 0
+        AND article.enabled = 1
+        <if test="articleTitle!=null">
+            AND article.name Like concat('%',#{articleTitle},'%')
+        </if>
+        GROUP BY article.id;
     </select>
 </mapper>

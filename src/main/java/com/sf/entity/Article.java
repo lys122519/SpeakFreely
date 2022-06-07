@@ -1,5 +1,6 @@
 package com.sf.entity;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.*;
 
 import java.io.Serializable;
@@ -28,13 +29,6 @@ public class Article implements Serializable {
     @TableId(value = "id", type = IdType.AUTO)
     private Integer id;
 
-    @ApiModelProperty("用户id")
-    private Integer userId;
-
-    @ApiModelProperty("发布人名称")
-    @TableField(exist = false)
-    private String username;
-
     @ApiModelProperty("标题")
     private String name;
 
@@ -51,9 +45,24 @@ public class Article implements Serializable {
     @ApiModelProperty("是否启用（即是否为草稿）")
     private ArticleEnum enabled;
 
+    @ApiModelProperty("用户id")
+    private Integer userId;
+
+    @ApiModelProperty("文章作者")
+    @TableField(exist = false)
+    private JSONObject author;
+
     @ApiModelProperty("文章标签")
     @TableField(exist = false)
     private List<Tags> tags;
+
+    public JSONObject getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(JSONObject author) {
+        this.author = author;
+    }
 
     public Integer getId() {
         return id;
@@ -103,13 +112,6 @@ public class Article implements Serializable {
         this.deleted = deleted;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 
     public List<Tags> getTags() {
         return tags;

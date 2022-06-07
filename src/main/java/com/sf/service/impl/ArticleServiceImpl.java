@@ -1,6 +1,7 @@
 package com.sf.service.impl;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Constants;
@@ -8,6 +9,8 @@ import com.sf.common.StringConst;
 import com.sf.entity.Article;
 import com.sf.entity.Tags;
 import com.sf.entity.TagsArticle;
+import com.sf.entity.User;
+import com.sf.entity.dto.ArticleDTO;
 import com.sf.enums.ArticleEnum;
 import com.sf.exception.ServiceException;
 import com.sf.mapper.ArticleMapper;
@@ -23,9 +26,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * <p>
@@ -54,11 +61,68 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    // 分页根据作者ID获取文章列表
+    public Page<ArticleDTO> pageArticle(Page<ArticleDTO> articlePage, Integer id, String type) {
+        switch (type) { // 三种类型均存在空标签文章情况，需对两种查询结果合并再分页
+            case "draft":// 草稿
+                List<ArticleDTO> recordsNull = articleMapper.pageArticleNullTag(id, 0);
+                List<ArticleDTO> records = articleMapper.pageArticle(id, 0);
+                records.addAll(recordsNull);
+                return pageArticleList(articlePage, records);
+            case "publish":// 已发布
+                recordsNull = articleMapper.pageArticleNullTag(id, 1);
+                records = articleMapper.pageArticle(id, 1);
+                records.addAll(recordsNull);
+                return pageArticleList(articlePage, records);
+            case "all":// 所有
+                recordsNull = articleMapper.pageArticleNullTag(id, null);
+                records = articleMapper.pageArticle(id, null);
+                records.addAll(recordsNull);
+                return pageArticleList(articlePage, records);
+            default:
+                throw new ServiceException(Constants.CODE_400, "未知操作!");
+        }
+    }
+
+    @Override
+    // 分页根据标签id和文章标题(至少一个不为空)搜索文章列表
+    public Page<ArticleDTO> pageSearchArticle(Page<ArticleDTO> articlePage, Integer id, String title) {
+        if (id != null) { // 标签id不为空，则无论标题是否为空都是根据标签id获取文章
+            List<ArticleDTO> records = articleMapper.pageSearchArticleByTag(id, title);
+            return pageArticleList(articlePage, records);// 调用文章列表分页方法分页并返回
+        } else if (StrUtil.isNotBlank(title)) { // 标签为空，标题必不能为空
+            // 先获取空标签文章，再获取文章标签关系列表中的文章进行合并
+            List<ArticleDTO> recordsNull = articleMapper.pageSearchArticleNullTag(title);
+            List<ArticleDTO> records = articleMapper.pageSearchArticleByTag(id, title);
+            records.addAll(recordsNull);
+            return pageArticleList(articlePage, records);// 调用文章列表分页方法分页并返回
+        } else {
+            throw new ServiceException(Constants.CODE_400, "未知操作!");
+        }
+    }
+
+    // 对查询到的文章列表进行分页
+    public Page<ArticleDTO> pageArticleList(Page<ArticleDTO> articlePage, List<ArticleDTO> records) {
+        // 根据文章总数设置分页数据总数
+        articlePage.setTotal(records.size());
+        // 根据文章总数设置分页页码总数
+        articlePage.setPages((records.size() + articlePage.getSize() - 1) / articlePage.getSize());
+        // 计算偏移量和切片位置下标(以获取指定页码的文章)
+        int offset = Math.toIntExact((articlePage.getCurrent() - 1) * articlePage.getSize());
+        int end = Math.toIntExact(articlePage.getCurrent() * articlePage.getSize());
+        if (end > records.size()) {// 如果当前切片结束位置超出数据总数，将其置为总数
+            end = records.size();
+        }
+        // 将切片后的文章列表放入分页记录列表
+        return articlePage.setRecords(records.subList(offset, end));
+    }
+
+    @Override
     public Article articleAction(String action, Article article) {
         // 设置文章的用户ID
         article.setUserId(RedisUtils.getCurrentUserId(TokenUtils.getToken()));
-        // 设置文章的发布者username
-        article.setUsername(RedisUtils.getCurrentUserAttr(TokenUtils.getToken(), "username"));
+        // 设置文章的作者
+        article.setAuthor(setAuthor());
         // 1.没有文章ID必然没有用户ID：新文章发布/新草稿保存
         if (article.getId() == null) {
             setEnable(action, article); // 设置启用状态
@@ -72,6 +136,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
         bindTags(article.getId(), article.getTags()); // 绑定标签操作
         return article;
+    }
+
+    /*设置文章作者*/
+    public JSONObject setAuthor() {
+        JSONObject author = new JSONObject(); //用于返回author
+        JSONObject user = RedisUtils.getUserRedis(TokenUtils.getToken()); // 查询redis用户信息
+        author.set("id", Integer.valueOf(user.get("id").toString()));
+        author.set("nickname", user.get("nickname"));
+        author.set("avatarUrl", user.get("avatarUrl") == null ? null : user.get("avatarUrl"));
+        return author;
     }
 
     /*设置是否启用文章*/
@@ -103,6 +177,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 通过差集确定要删除的标签id列表和要新增的标签id列表
         List<Integer> deleteList = ObjectActionUtils.listComplement(oldList, nowList);
         List<Integer> addList = ObjectActionUtils.listComplement(nowList, oldList);
+//        log.warn(deleteList.toString());
+//        log.warn(addList.toString());
         if (deleteList.size() > 0) {
             tagsArticleMapper.batchRemoveList(articleID, deleteList); // 批量删除标签关系
         }

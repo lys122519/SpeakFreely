@@ -41,7 +41,7 @@ public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements IT
 
     @Override
     /*会先查询redis缓存，没查到再从mysql统计，然后存入redis(1小时)*/
-    public JSONObject getTop100() {
+    public List<JSONObject> getTop100() {
         // 先查询redis标签缓存
         Map<Object, Object> tagTop100 = RedisUtils.mapFromRedis(StringConst.TAGS_REDIS_KEY);
         if (tagTop100.size() == 0) { // 判断缓存是否为空
@@ -57,6 +57,6 @@ public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements IT
             //将tagTop100放入redis(并设置过期时长)
             RedisUtils.mapToRedis(StringConst.TAGS_REDIS_KEY, tagTop100, Constants.TAG_REDIS_TIMEOUT);
         }
-        return RedisUtils.jsonFromMap(tagTop100);
+        return RedisUtils.jsonListFromMap(tagTop100);
     }
 }
