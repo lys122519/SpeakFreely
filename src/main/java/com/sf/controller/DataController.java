@@ -12,6 +12,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -33,6 +35,10 @@ public class DataController {
 
     @Resource
     private ActiveUserServiceImpl activeUserService;
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
 
     @GetMapping("/interface/{intCount}")
     @ApiOperation(value = "查找接口成功访问次数（默认倒序）")
@@ -71,13 +77,19 @@ public class DataController {
     }
 
     @GetMapping("/activeUserCountByHour")
-    @ApiOperation(value = "查询系统活跃用户数(24小时内)")
-    public Result<ArrayList<Integer>> findActiveUserCount(
+    @ApiOperation(value = "查询系统活跃用户数(24小时内)", notes = ",整点统计")
+    public Result<ArrayList<Integer>> findActiveUserCount() {
 
-    ) {
-        String startTime = DateUtil.now();
+        ArrayList<Integer> activeList = new ArrayList<>();
 
-        ArrayList<Integer> activeList = activeUserService.findActiveUserCountByHour(startTime);
+        int size = Objects.requireNonNull(stringRedisTemplate.opsForList().size(StringConst.ACTIVE_USER)).intValue();
+        //取size个数据
+        List<String> range = stringRedisTemplate.opsForList().range(StringConst.ACTIVE_USER, 0, size);
+        assert range != null;
+        //将redis中对应结果存入list
+        for (String element : range) {
+            activeList.add(Integer.valueOf(element));
+        }
 
         return Result.success(activeList);
     }

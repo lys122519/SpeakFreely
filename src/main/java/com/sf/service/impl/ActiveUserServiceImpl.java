@@ -28,6 +28,25 @@ public class ActiveUserServiceImpl extends ServiceImpl<ActiveUserMapper, ActiveU
     private ActiveUserMapper activeUserMapper;
 
 
+    public Integer findActiveUserByHour(String startTime) {
+
+        //按小时查找
+        DateTime dateTime = DateUtil.parse(startTime);
+
+        String startTime1 = DateUtil.offsetHour(dateTime, 0).toString();
+        String endTime1 = DateUtil.offsetHour(dateTime, -1).toString();
+        QueryWrapper<ActiveUser> queryWrapper = new QueryWrapper<>();
+
+        queryWrapper.select("DISTINCT user_id");
+        queryWrapper.between("time", startTime1, endTime1);
+
+        Long count = activeUserMapper.selectCount(queryWrapper);
+
+        return Math.toIntExact(count);
+
+    }
+
+
     @Override
     public ArrayList<Integer> findActiveUserCountByHour(String startTime) {
         ArrayList<Integer> resultList = new ArrayList<>();

@@ -27,6 +27,11 @@ public interface StringConst {
     String INTERFACE_ACTUATOR = "INTERFACE_ACTUATOR";
 
 
+    /**
+     * 活跃用户key
+     */
+    String ACTIVE_USER = "ACTIVE_USER";
+
     /*---redis中的缓存key---*/
 
     /*1.单个对象以String缓存*/
