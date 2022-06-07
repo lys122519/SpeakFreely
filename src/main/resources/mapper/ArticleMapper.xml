@@ -17,12 +17,12 @@
         SELECT article.*,
         author.nickname author_nickname, author.avatar_url author_avatar_url
         FROM tb_article article, tb_user author
-        WHERE article.id = #{articleID} AND article.deleted=0 AND article.enabled=1
+        WHERE article.id = #{articleID} AND article.deleted=0
         AND article.user_id = author.id
     </select>
     <select id="pageArticle" resultType="com.sf.entity.dto.ArticleDTO">
         SELECT
-        article.*,
+        article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
         author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         group_concat(tags.id ORDER BY tags.id SEPARATOR ';') AS 'tags_id',
@@ -53,7 +53,7 @@
     </select>
     <select id="pageArticleNullTag" resultType="com.sf.entity.dto.ArticleDTO">
         SELECT
-        article.*,
+        article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
         author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         null AS 'tags_id',
@@ -79,7 +79,7 @@
         GROUP BY article.id
     </select>
     <select id="pageSearchArticleByTag" resultType="com.sf.entity.dto.ArticleDTO">
-        SELECT article.*,
+        SELECT article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
         author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         author.avatar_url author_avatar_url,
@@ -113,7 +113,7 @@
         GROUP BY article.id;
     </select>
     <select id="pageSearchArticleNullTag" resultType="com.sf.entity.dto.ArticleDTO">
-        SELECT article.*,
+        SELECT article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
         author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         null AS 'tags_id',

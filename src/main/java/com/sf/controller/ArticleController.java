@@ -74,7 +74,7 @@ public class ArticleController {
     }
 
     @GetMapping("/{id}")
-    @ApiOperation(value = "根据文章id查找已发布文章(包含作者和标签信息)", notes = "用户已登录,请求路径包含文章id", httpMethod = "GET")
+    @ApiOperation(value = "根据文章id获取文章详细信息(包含文章内容，作者和标签信息)", notes = "用户已登录,请求路径包含文章id", httpMethod = "GET")
     public Result<JSONObject> findOne(@PathVariable Integer id) {
         JSONObject article = new JSONObject(articleMapper.getArticleByID(id)); // 获取文章信息(包含作者信息)
         if (article.size() > 0) {// 有已发布文章才给标签
@@ -84,7 +84,7 @@ public class ArticleController {
     }
 
     @GetMapping("/self/{type}/{page}/{limit}")
-    @ApiOperation(value = "作者自身获取未被删除文章列表(包含作者和标签信息)", notes = "token(headers),type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    @ApiOperation(value = "作者自身获取未被删除文章列表(不包含文章内容，包含作者和标签信息)", notes = "token(headers),type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> getSelfArticle(@PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
         // 作者获取自身文章列表(包含作者信息)
         Integer id = RedisUtils.getCurrentUserId(TokenUtils.getToken());// 根据token获取作者id
@@ -92,19 +92,19 @@ public class ArticleController {
     }
 
     @GetMapping("/author/{id}/{type}/{page}/{limit}")
-    @ApiOperation(value = "指定作者id获取文章列表(包含作者和标签信息)", notes = "用户已登录,请求路径包含文章作者id,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    @ApiOperation(value = "指定作者id获取文章列表(不包含文章内容，包含作者和标签信息)", notes = "用户已登录,请求路径包含文章作者id,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> getAuthorArticle(@PathVariable Integer id, @PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
         return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type));
     }
 
     @GetMapping("/{type}/{page}/{limit}")
-    @ApiOperation(value = "分页获取所有作者文章列表(包含作者和标签)", notes = "用户已登录,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    @ApiOperation(value = "分页获取所有作者文章列表(不包含文章内容，包含作者和标签)", notes = "用户已登录,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> getArticleList(@PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
         return Result.success(articleService.pageArticle(new Page<>(page, limit), null, type));
     }
 
     @GetMapping("/search/{page}/{limit}")
-    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
+    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> pageSearchArticle(@RequestBody ArticleDTO articleDTO, @PathVariable Integer page, @PathVariable Integer limit) {
         if (articleDTO.getSearchTagID() != null && !articleDTO.getSearchTagID().toString().equals("") || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
             return Result.success(articleService.pageSearchArticle(new Page<>(page, limit), articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
