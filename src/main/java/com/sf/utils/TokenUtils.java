@@ -7,9 +7,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.sf.entity.User;
 import com.sf.service.IUserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -28,6 +26,7 @@ import java.util.Objects;
 public class TokenUtils {
 
     private static IUserService staticUserService;
+    
     @Resource
     private IUserService userService;
 

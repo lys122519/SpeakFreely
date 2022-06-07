@@ -1,10 +1,9 @@
 package com.sf.mapper;
 
-import com.sf.entity.Tags;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.sf.entity.Tags;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 

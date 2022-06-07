@@ -14,7 +14,6 @@ public class ServiceException extends RuntimeException {
     }
 
 
-
     public Integer getCode() {
         return code;
     }

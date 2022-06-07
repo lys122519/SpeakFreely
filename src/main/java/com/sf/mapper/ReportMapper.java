@@ -1,9 +1,8 @@
 package com.sf.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.sf.entity.Report;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.sf.entity.dto.CommentDto;
 import com.sf.entity.dto.ReportDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

@@ -2,14 +2,12 @@ package com.sf.entity;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.*;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.List;
-
 import com.sf.enums.ArticleEnum;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>

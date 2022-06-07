@@ -1,13 +1,11 @@
 package com.sf.mapper;
 
-import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.entity.Article;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.sf.entity.dto.ArticleDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
 

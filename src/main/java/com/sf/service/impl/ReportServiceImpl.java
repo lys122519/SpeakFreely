@@ -1,20 +1,15 @@
 package com.sf.service.impl;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.sf.entity.Comment;
-import com.sf.entity.Files;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.entity.Report;
 import com.sf.entity.dto.ReportDto;
 import com.sf.mapper.ReportMapper;
 import com.sf.service.IReportService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;

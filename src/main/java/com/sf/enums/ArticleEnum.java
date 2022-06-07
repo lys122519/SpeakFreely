@@ -13,12 +13,12 @@ public enum ArticleEnum implements IEnum<Integer> {
     /**
      * 未启用
      */
-    DISABLE(0,"未启用"),
+    DISABLE(0, "未启用"),
 
     /**
      * 启用
      */
-    ENABLE(1,"启用");
+    ENABLE(1, "启用");
 
 
     @EnumValue

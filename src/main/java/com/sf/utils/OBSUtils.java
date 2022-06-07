@@ -4,11 +4,8 @@ import com.obs.services.ObsClient;
 import com.obs.services.exception.ObsException;
 import com.obs.services.model.PutObjectRequest;
 import com.obs.services.model.PutObjectResult;
-import com.sf.controller.FilesController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -67,6 +64,7 @@ public class OBSUtils {
 
     /**
      * OBS 下载文件
+     *
      * @param fileFakeName
      * @return
      * @throws IOException
@@ -83,7 +81,7 @@ public class OBSUtils {
             while ((len = input.read(b)) != -1) {
                 bos.write(b, 0, len);
             }
-        }catch(ObsException ex){
+        } catch (ObsException ex) {
             log.warn(ex.getErrorMessage());
         }
         assert bos != null;

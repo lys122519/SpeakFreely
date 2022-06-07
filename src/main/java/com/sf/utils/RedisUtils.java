@@ -3,7 +3,6 @@ package com.sf.utils;
 import cn.hutool.json.JSONObject;
 import com.sf.common.Constants;
 import com.sf.exception.ServiceException;
-import org.omg.CORBA.TIMEOUT;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -14,7 +13,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**

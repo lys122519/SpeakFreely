@@ -2,22 +2,17 @@ package com.sf.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.entity.Comment;
-import com.sf.entity.Files;
 import com.sf.entity.dto.CommentDto;
 import com.sf.mapper.CommentMapper;
 import com.sf.mapper.UserMapper;
 import com.sf.service.ICommentService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -26,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 

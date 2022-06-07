@@ -1,10 +1,10 @@
 package com.sf.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
-import com.sf.entity.Comment;
+import com.sf.entity.Report;
 import com.sf.entity.dto.ReportDto;
+import com.sf.service.IReportService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -12,12 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-
-
-import com.sf.service.IReportService;
-import com.sf.entity.Report;
-
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * <p>

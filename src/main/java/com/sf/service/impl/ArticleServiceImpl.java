@@ -4,12 +4,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.entity.Article;
 import com.sf.entity.Tags;
 import com.sf.entity.TagsArticle;
-import com.sf.entity.User;
 import com.sf.entity.dto.ArticleDTO;
 import com.sf.enums.ArticleEnum;
 import com.sf.exception.ServiceException;
@@ -17,7 +17,6 @@ import com.sf.mapper.ArticleMapper;
 import com.sf.mapper.TagsArticleMapper;
 import com.sf.mapper.TagsMapper;
 import com.sf.service.IArticleService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.ObjectActionUtils;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
@@ -26,13 +25,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * <p>

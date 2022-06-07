@@ -1,18 +1,17 @@
 package com.sf.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.sf.entity.Files;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.sf.entity.Files;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.ServletOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 
 /**
  * <p>
- *  服务类
+ * 服务类
  * </p>
  *
  * @author leung
@@ -21,12 +20,14 @@ import java.util.List;
 public interface IFilesService extends IService<Files> {
     /**
      * 根据id删除文件
+     *
      * @param id
      */
     void deleteById(Integer id);
 
     /**
      * 根据id批量删除
+     *
      * @param ids
      */
     void deleteBatchByIds(List<Integer> ids);
@@ -34,6 +35,7 @@ public interface IFilesService extends IService<Files> {
 
     /**
      * 上传文件
+     *
      * @param file
      * @return 文件url
      */
@@ -41,6 +43,7 @@ public interface IFilesService extends IService<Files> {
 
     /**
      * 分页查询
+     *
      * @param pageNum
      * @param pageSize
      * @param files
@@ -50,12 +53,14 @@ public interface IFilesService extends IService<Files> {
 
     /**
      * 查找所有文件
+     *
      * @return
      */
-    List<Files>  findAllFile();
+    List<Files> findAllFile();
 
     /**
      * 下载单文件
+     *
      * @param fileId
      * @param outputStream
      * @return

@@ -12,11 +12,11 @@ public enum SexEnum implements IEnum<Integer> {
     /**
      * 女
      */
-    WOMAN(0,"女"),
+    WOMAN(0, "女"),
     /**
      * 男
      */
-    MAN(1,"男");
+    MAN(1, "男");
 
     @EnumValue
     private int value;
@@ -38,7 +38,6 @@ public enum SexEnum implements IEnum<Integer> {
     public String toString() {
         return this.desc;
     }
-
 
 
 }

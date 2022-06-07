@@ -1,20 +1,14 @@
 package com.sf.scheduled;
 
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.json.JSONObject;
 import com.sf.common.StringConst;
 import com.sf.service.impl.ActiveUserServiceImpl;
-import com.sf.utils.RedisUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @Description: 定时任务

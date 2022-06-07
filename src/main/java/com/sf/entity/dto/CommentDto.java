@@ -1,13 +1,7 @@
 package com.sf.entity.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.sf.entity.Comment;
 import io.swagger.annotations.ApiModelProperty;
-
-import java.util.List;
 
 /**
  * @Description:

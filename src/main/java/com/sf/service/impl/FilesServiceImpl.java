@@ -2,7 +2,6 @@ package com.sf.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -13,15 +12,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.obs.services.model.PutObjectResult;
 import com.sf.common.Constants;
-import com.sf.common.Result;
 import com.sf.common.StringConst;
 import com.sf.entity.Files;
 import com.sf.exception.ServiceException;
 import com.sf.mapper.FilesMapper;
 import com.sf.service.IFilesService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.OBSUtils;
 import com.sf.utils.RedisUtils;
 import org.apache.logging.log4j.util.Strings;
@@ -34,7 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -60,6 +61,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
     /**
      * 根据id删除文件
+     *
      * @param id
      */
     @Override
@@ -70,6 +72,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
     /**
      * 根据id批量删除
+     *
      * @param ids
      */
     @Override
@@ -80,6 +83,7 @@ public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements
 
     /**
      * 上传文件
+     *
      * @param file
      * @return
      * @throws IOException

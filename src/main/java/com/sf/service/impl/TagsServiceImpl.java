@@ -2,12 +2,12 @@ package com.sf.service.impl;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.common.Constants;
 import com.sf.common.StringConst;
 import com.sf.entity.Tags;
 import com.sf.mapper.TagsMapper;
 import com.sf.service.ITagsService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sf.utils.RedisUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +16,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * <p>

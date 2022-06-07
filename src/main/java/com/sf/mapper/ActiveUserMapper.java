@@ -1,11 +1,8 @@
 package com.sf.mapper;
 
-import com.sf.entity.ActiveUser;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.sf.entity.ActiveUser;
 import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-
-import java.util.ArrayList;
 
 /**
  * <p>
@@ -17,7 +14,6 @@ import java.util.ArrayList;
  */
 @Mapper
 public interface ActiveUserMapper extends BaseMapper<ActiveUser> {
-
 
 
 }

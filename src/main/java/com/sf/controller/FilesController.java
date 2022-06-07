@@ -2,24 +2,22 @@ package com.sf.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.sf.common.Result;
-import io.swagger.annotations.*;
+import com.sf.entity.Files;
+import com.sf.service.IFilesService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.List;
-import java.net.URLEncoder;
-
-import com.sf.service.IFilesService;
-import com.sf.entity.Files;
-
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.List;
 
 /**
  * <p>

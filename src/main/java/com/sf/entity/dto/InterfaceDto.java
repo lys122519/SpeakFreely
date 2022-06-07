@@ -25,8 +25,7 @@ public class InterfaceDto implements Comparable<InterfaceDto> {
     public void setCount(Integer count) {
         this.count = count;
     }
-
-
+    
     @Override
     public int compareTo(InterfaceDto o) {
         return this.count.compareTo(o.count);
