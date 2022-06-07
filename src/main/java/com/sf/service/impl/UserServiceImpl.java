@@ -20,6 +20,7 @@ import com.sf.exception.ServiceException;
 import com.sf.mapper.ActiveUserMapper;
 import com.sf.mapper.UserMapper;
 import com.sf.service.IUserService;
+import com.sf.utils.HttpUtil;
 import com.sf.utils.ObjectActionUtils;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
@@ -33,6 +34,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,7 +66,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     private String from; // 邮件发送者
 
     @Override
-    public UserDTO userLogin(String username, String password) { // 用户登录
+    public UserDTO userLogin(String username, String password, String userFace) { // 用户登录
+        if (StrUtil.isNotBlank(username) && StrUtil.isNotBlank(password) && StrUtil.isBlank(userFace)) {
+            return userPwdLogin(username, password);
+        } else if (StrUtil.isBlank(username) && StrUtil.isBlank(password) && StrUtil.isNotBlank(userFace)) {
+            return userFaceLogin(userFace);
+        } else {
+            throw new ServiceException(Constants.CODE_400, "参数异常");
+        }
+    }
+
+    public UserDTO userPwdLogin(String username, String password) {
         User user;
         if (checkEmail(username)) { // 用户名格式确定登录方式
             user = checkUser(StringConst.EMAIL_LOGIN, "email", username); // 邮箱登录方式
@@ -78,7 +90,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             activeUser.setUserId(user.getId());
             activeUserMapper.insert(activeUser);
 
-
             UserDTO loginUser = new UserDTO();
             // 通过浅拷贝设置用户信息,忽略空值
             BeanUtil.copyProperties(user, loginUser, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
@@ -86,6 +97,56 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             return setToken(loginUser); // 返回设置token后的用户对象
         } else { // 用户提交信息不匹配
             throw new ServiceException(Constants.CODE_400, "账号或密码错误");
+        }
+    }
+
+    public UserDTO userFaceLogin(String userFace) {
+        User user = new User();
+        // 请求url
+        String url = "https://aip.baidubce.com/rest/2.0/face/v3/search";
+        // 设置请求体json格式参数
+        JSONObject jsonUpload = new JSONObject();
+        jsonUpload.set("image", userFace);
+        jsonUpload.set("group_id_list", "speakfreely");
+        jsonUpload.set("image_type", "BASE64");
+
+        // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
+        String accessToken = StringConst.BAIDU_ACCESS_TOKEN;
+
+        String result = null;
+        try {// 发送人脸搜索请求
+            result = HttpUtil.post(url, accessToken, "application/json", jsonUpload.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        JSONObject jsonResult = new JSONObject(result); // 将匹配结果转为json对象
+        if (jsonResult.get("error_msg").equals("SUCCESS")) { // 检测匹配结果是否通过
+            jsonResult = new JSONObject(jsonResult.get("result")); // 获取检测结果中的result信息
+            // 获取匹配到的用户信息列表
+            List<JSONObject> userResult = (List<JSONObject>) jsonResult.get("user_list");
+            // 检测吻合度大于85则表示验证通过
+            if (Float.parseFloat(String.valueOf(userResult.get(0).get("score"))) > 85.0) {
+                // 从人脸匹配结果中获取用户id信息，以此从系统mysql数据库获取对应用户信息
+                QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
+                userQueryWrapper.eq("id", userResult.get(0).get("user_id"));
+                user = userMapper.selectOne(userQueryWrapper);
+
+                //将用户登录信息存入活跃用户表
+                ActiveUser activeUser = new ActiveUser();
+                activeUser.setTime(DateUtil.now());
+                activeUser.setUserId(user.getId());
+                activeUserMapper.insert(activeUser);
+
+                UserDTO loginUser = new UserDTO();
+                // 通过浅拷贝设置用户信息,忽略空值
+                BeanUtil.copyProperties(user, loginUser, CopyOptions.create().setIgnoreNullValue(true).setIgnoreCase(true));
+
+                return setToken(loginUser); // 返回设置token后的用户对象
+            } else {
+                throw new ServiceException(Constants.CODE_400, "没有匹配的用户信息");
+            }
+        } else {
+            throw new ServiceException(Constants.CODE_400, "人脸验证失败");
         }
     }
 
@@ -104,7 +165,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             // 修改成功，删除redis缓存中对应的验证码信息
             stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
             // 直接使用新注册的用户信息登录
-            return userLogin(userDTO.getUsername(), userDTO.getPassword());// 设置token并返回
+            return userPwdLogin(userDTO.getUsername(), userDTO.getPassword());// 设置token并返回
         } else {
             throw new ServiceException(Constants.CODE_600, "验证码不匹配");
         }
@@ -173,6 +234,43 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } else {
             throw new ServiceException(Constants.CODE_600, "验证码不匹配");
         }
+    }
+
+    @Override
+    public JSONObject faceUpload(UserDTO userDTO) { // 人脸录入
+        Integer user_id = RedisUtils.getCurrentUserId(userDTO.getToken());// 获取当前用户ID
+        // 请求url
+        String url = "https://aip.baidubce.com/rest/2.0/face/v3/faceset/user/update";
+        try {// 构建人脸上传请求体json格式数据
+            JSONObject jsonUpload = new JSONObject();
+            jsonUpload.set("image", userDTO.getUserFace());
+            jsonUpload.set("group_id", "speakfreely");
+            jsonUpload.set("user_id", user_id);
+            jsonUpload.set("image_type", "BASE64");
+            jsonUpload.set("quality_control", "LOW");
+            jsonUpload.set("action_type", "REPLACE");
+
+
+            // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
+            String accessToken = StringConst.BAIDU_ACCESS_TOKEN;
+
+            String result = HttpUtil.post(url, accessToken, "application/json", jsonUpload.toString());
+            //log.info(result);
+            JSONObject jsonResult = new JSONObject(result);
+            if (jsonResult.get("error_msg").equals("SUCCESS")) { // 检测上传结果
+                jsonResult = new JSONObject(jsonResult.get("result"));
+                User user = new User();
+                // 设置用户人脸信息为人脸库中的人脸token值
+                user.setUserFace(jsonResult.get("face_token").toString());
+                user.setId(RedisUtils.getCurrentUserId(userDTO.getToken())); // 设置用户id
+                userMapper.updateById(user); // 将人脸token信息更新同步到数据库
+            } else { // 上传失败直接将失败结果返回
+                return jsonResult;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

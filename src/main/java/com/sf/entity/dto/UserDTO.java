@@ -16,6 +16,15 @@ public class UserDTO {
     private String role;
     private String code;
     private String token;
+    private String userFace;
+
+    public String getUserFace() {
+        return userFace;
+    }
+
+    public void setUserFace(String userFace) {
+        this.userFace = userFace;
+    }
 
     public Integer getId() {
         return id;

@@ -32,6 +32,11 @@ public interface StringConst {
      */
     String ACTIVE_USER = "ACTIVE_USER";
 
+    /**
+     * 百度AI智能云Token
+     */
+    String BAIDU_ACCESS_TOKEN = "24.e0cf8ab9a9b3ab0aec711f4c6b59105a.2592000.1657177329.282335-26370056";
+
     /*---redis中的缓存key---*/
 
     /*1.单个对象以String缓存*/

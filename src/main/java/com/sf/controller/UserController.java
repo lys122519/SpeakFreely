@@ -1,6 +1,7 @@
 package com.sf.controller;
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
@@ -84,11 +85,11 @@ public class UserController {
         return Result.success(userService.page(new Page<>(pageNum, pageSize)));
     }
 
-    @ApiOperation(value = "用户登录", notes = "必须参数：username/email + password", httpMethod = "POST")
+    @ApiOperation(value = "用户登录", notes = "必须参数：username/email + password/userFace(BASE64)", httpMethod = "POST")
     @PostMapping("/login")
     public Result<UserDTO> userLogin(@RequestBody UserDTO userDTO) {
-        if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getPassword())) {
-            return Result.success(userService.userLogin(userDTO.getUsername(), userDTO.getPassword()));
+        if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getPassword())||StrUtil.isNotBlank(userDTO.getUserFace())) {
+            return Result.success(userService.userLogin(userDTO.getUsername(), userDTO.getPassword(), userDTO.getUserFace()));
         } else {
             throw new ServiceException(Constants.CODE_400, "参数异常!");
         }
@@ -123,6 +124,17 @@ public class UserController {
         if (StrUtil.isNotBlank(userDTO.getUsername()) && StrUtil.isNotBlank(userDTO.getEmail()) &&
                 StrUtil.isNotBlank(userDTO.getPassword()) && StrUtil.isNotBlank(userDTO.getCode())) {
             return Result.success(userService.userRegister(userDTO));
+        } else {
+            throw new ServiceException(Constants.CODE_400, "参数异常!");
+        }
+    }
+
+    @ApiOperation(value = "人脸录入", notes = "必须参数：token(headers中);userFace(BASE64)", httpMethod = "POST")
+    @PostMapping("/faceUpload")
+    public Result<JSONObject> faceUpload(@RequestBody UserDTO userDTO) {
+        userDTO.setToken(TokenUtils.getToken());
+        if (StrUtil.isNotBlank(userDTO.getToken()) && StrUtil.isNotBlank(userDTO.getUserFace())) {
+            return Result.success(userService.faceUpload(userDTO));
         } else {
             throw new ServiceException(Constants.CODE_400, "参数异常!");
         }

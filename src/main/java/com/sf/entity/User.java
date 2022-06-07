@@ -58,6 +58,16 @@ public class User implements Serializable {
     @ApiModelProperty("角色")
     private String role;
 
+    @ApiModelProperty("用户人脸")
+    private String userFace;
+
+    public String getUserFace() {
+        return userFace;
+    }
+
+    public void setUserFace(String userFace) {
+        this.userFace = userFace;
+    }
 
     public Integer getId() {
         return id;
