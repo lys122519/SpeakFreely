@@ -109,8 +109,8 @@ public class ArticleController {
     @AuthAccess
     @GetMapping("/search/{page}/{limit}")
     @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
-    public Result<IPage<ArticleDTO>> pageSearchArticle(ArticleDTO articleDTO, @PathVariable Integer page, @PathVariable Integer limit) {
-        if (StrUtil.isNotBlank(articleDTO.getTagsID()) || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
+    public Result<IPage<ArticleDTO>> pageSearchArticle(@PathVariable Integer page, @PathVariable Integer limit,ArticleDTO articleDTO) {
+        if (articleDTO.getSearchTagID()!=null || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
             return Result.success(articleService.pageSearchArticle(new Page<>(page, limit), articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
         } else {
             throw new ServiceException(Constants.CODE_400, "标签ID和文章标题不能全为空!");
