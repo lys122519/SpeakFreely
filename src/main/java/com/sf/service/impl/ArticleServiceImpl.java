@@ -26,7 +26,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -55,22 +57,29 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
+    public void addCounts(Integer articleID){ // 访问量+1
+        Article article = articleMapper.selectById(articleID);
+        article.setCounts(article.getCounts()+1); // 访问数+1
+        articleMapper.updateById(article); // 向数据库更新文章信息
+    }
+
+    @Override
     // 分页根据作者ID获取文章列表
-    public Page<ArticleDTO> pageArticle(Page<ArticleDTO> articlePage, Integer id, String type) {
+    public Page<ArticleDTO> pageArticle(Page<ArticleDTO> articlePage, Integer id, String type, String title) {
         switch (type) { // 三种类型均存在空标签文章情况，需对两种查询结果合并再分页
             case "draft":// 草稿
-                List<ArticleDTO> recordsNull = articleMapper.pageArticleNullTag(id, 0);
-                List<ArticleDTO> records = articleMapper.pageArticle(id, 0);
+                List<ArticleDTO> recordsNull = articleMapper.pageArticleNullTag(id, 0,title);
+                List<ArticleDTO> records = articleMapper.pageArticle(id, 0,title);
                 records.addAll(recordsNull);
                 return pageArticleList(articlePage, records);
             case "publish":// 已发布
-                recordsNull = articleMapper.pageArticleNullTag(id, 1);
-                records = articleMapper.pageArticle(id, 1);
+                recordsNull = articleMapper.pageArticleNullTag(id, 1,title);
+                records = articleMapper.pageArticle(id, 1,title);
                 records.addAll(recordsNull);
                 return pageArticleList(articlePage, records);
             case "all":// 所有
-                recordsNull = articleMapper.pageArticleNullTag(id, null);
-                records = articleMapper.pageArticle(id, null);
+                recordsNull = articleMapper.pageArticleNullTag(id, null,title);
+                records = articleMapper.pageArticle(id, null,title);
                 records.addAll(recordsNull);
                 return pageArticleList(articlePage, records);
             default:
@@ -93,6 +102,43 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         } else {
             throw new ServiceException(Constants.CODE_400, "未知操作!");
         }
+    }
+
+    @Override
+    public List<JSONObject> getTop5() {// 获取文章按照counts排序前5个
+        // 先查询redis标签缓存
+        Map<Object, Object> articleTop5 = RedisUtils.mapFromRedis(StringConst.ARTICLE_REDIS_KEY);
+        if (articleTop5.size() == 0) { // 判断缓存是否为空
+            List<ArticleDTO> articleList = articleMapper.getArticleTopByTag(); // 查询带标签文章前5个结果
+            List<ArticleDTO> articleNullTag = articleMapper.getArticleTopNullTag(); // 查询无标签文章前5个结果
+            articleList.addAll(articleNullTag);
+            articleList.sort((o1, o2) -> {
+                if (o1.getCounts() < o2.getCounts()) return 1;
+                else return -1;
+            });
+            if (articleList.size() > 5) { // 超过5个文章则进行切片
+                articleList = articleList.subList(0, 5);
+            }
+            for (ArticleDTO article : articleList) { // 将标签对象(先变成json对象再转为字符串)压入文章topMap
+                articleTop5.put(article.getId().toString(), new JSONObject(article).toString());
+            }
+            //将articleTop5放入redis(并设置过期时长)
+            RedisUtils.mapToRedis(StringConst.ARTICLE_REDIS_KEY, articleTop5, Constants.ARTICLE_REDIS_TIMEOUT);
+        }else { // redis已存在文章map缓存信息
+            // 将map还原为list进行排序
+            List<JSONObject> articleList = RedisUtils.jsonListFromMap(articleTop5);
+            articleTop5.clear();//清空map，重新排序
+            //按counts排序
+            articleList.sort((o1, o2) -> {
+                if (Integer.parseInt(String.valueOf(o1.get("counts"))) < Integer.parseInt(String.valueOf(o2.get("counts")))) return 1;
+                else return -1;
+            });
+            // 将排序结果压入map
+            for (JSONObject article : articleList) { // 将标签对象(先变成json对象再转为字符串)压入文章topMap
+                articleTop5.put(article.get("id").toString(), new JSONObject(article).toString());
+            }
+        }
+        return RedisUtils.jsonListFromMap(articleTop5);
     }
 
     // 对查询到的文章列表进行分页

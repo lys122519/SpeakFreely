@@ -20,10 +20,60 @@
         WHERE article.id = #{articleID} AND article.deleted=0
         AND article.user_id = author.id
     </select>
+    <select id="getArticleTopByTag" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT
+        article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
+        article.counts,author.nickname author_nickname,
+        author.avatar_url author_avatar_url,
+        group_concat(tags.id ORDER BY tags.id SEPARATOR ';') AS 'tags_id',
+        group_concat(tags.content ORDER BY tags.id SEPARATOR ';') AS 'tags_content',
+        group_concat(tags.counts ORDER BY tags.id SEPARATOR ';') AS 'tags_counts'
+        FROM
+        tb_article article,
+        tb_user author,
+        tb_tag_article tagArticle,
+        tb_tags tags
+        WHERE article.id IN
+        (SELECT tb_tag_article.article_id
+        FROM tb_tag_article
+        WHERE tb_tag_article.tag_id = tb_tag_article.tag_id)
+        AND article.user_id = author.id
+        AND article.enabled=1
+        AND article.deleted=0
+        AND article.id = tagArticle.article_id
+        AND tagArticle.tag_id = tags.id
+
+        GROUP BY article.id
+        ORDER BY article.counts DESC
+        LIMIT 0,5
+    </select>
+    <select id="getArticleTopNullTag" resultType="com.sf.entity.dto.ArticleDTO">
+        SELECT
+        article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
+        article.counts,author.nickname author_nickname,
+        author.avatar_url author_avatar_url,
+        null AS 'tags_id',
+        null AS 'tags_content',
+        null AS 'tags_counts'
+        FROM
+        tb_article article,
+        tb_user author
+        WHERE article.id NOT IN
+        (SELECT tb_tag_article.article_id
+        FROM tb_tag_article
+        WHERE tb_tag_article.tag_id = tb_tag_article.tag_id)
+        AND article.user_id = author.id
+        AND article.enabled=1
+        AND article.deleted=0
+
+        GROUP BY article.id
+        ORDER BY article.counts DESC
+        LIMIT 0,5
+    </select>
     <select id="pageArticle" resultType="com.sf.entity.dto.ArticleDTO">
         SELECT
         article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
-        author.nickname author_nickname,
+        article.counts,author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         group_concat(tags.id ORDER BY tags.id SEPARATOR ';') AS 'tags_id',
         group_concat(tags.content ORDER BY tags.id SEPARATOR ';') AS 'tags_content',
@@ -46,6 +96,9 @@
         <if test="enabled!=null">
             AND article.enabled=#{enabled}
         </if>
+        <if test="articleTitle!=null">
+            AND article.name Like concat('%',#{articleTitle},'%')
+        </if>
         AND article.deleted=0
         AND article.id = tagArticle.article_id
         AND tagArticle.tag_id = tags.id
@@ -54,7 +107,7 @@
     <select id="pageArticleNullTag" resultType="com.sf.entity.dto.ArticleDTO">
         SELECT
         article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
-        author.nickname author_nickname,
+        article.counts,author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         null AS 'tags_id',
         null AS 'tags_content',
@@ -76,11 +129,15 @@
         <if test="enabled!=null">
             AND article.enabled=#{enabled}
         </if>
+        <if test="articleTitle!=null">
+            AND article.name Like concat('%',#{articleTitle},'%')
+        </if>
         GROUP BY article.id
     </select>
     <select id="pageSearchArticleByTag" resultType="com.sf.entity.dto.ArticleDTO">
-        SELECT article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
-        author.nickname author_nickname,
+        SELECT
+        article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
+        article.counts,author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         author.avatar_url author_avatar_url,
         group_concat(tags.id ORDER BY tags.id SEPARATOR ';') AS 'tags_id',
@@ -113,8 +170,9 @@
         GROUP BY article.id;
     </select>
     <select id="pageSearchArticleNullTag" resultType="com.sf.entity.dto.ArticleDTO">
-        SELECT article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
-        author.nickname author_nickname,
+        SELECT
+        article.id,article.user_id,article.name,article.time,article.enabled,article.deleted,
+        article.counts,author.nickname author_nickname,
         author.avatar_url author_avatar_url,
         null AS 'tags_id',
         null AS 'tags_content',

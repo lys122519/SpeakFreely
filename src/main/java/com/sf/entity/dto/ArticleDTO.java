@@ -1,6 +1,7 @@
 package com.sf.entity.dto;
 
 import com.sf.enums.ArticleEnum;
+import io.swagger.annotations.ApiModelProperty;
 
 public class ArticleDTO {
     private Integer id;
@@ -9,6 +10,7 @@ public class ArticleDTO {
     private String time;
     private Boolean deleted;
     private ArticleEnum enabled;
+    private Long counts;
     private Integer userId;
     private String authorNickname;
     private String authorAvatarUrl;
@@ -17,6 +19,14 @@ public class ArticleDTO {
     private String tagsCounts;
     private Integer searchTagID;
     private String searchArticleTitle;
+
+    public Long getCounts() {
+        return counts;
+    }
+
+    public void setCounts(Long counts) {
+        this.counts = counts;
+    }
 
     public Integer getSearchTagID() {
         return searchTagID;

@@ -43,6 +43,9 @@ public class Article implements Serializable {
     @ApiModelProperty("是否启用（即是否为草稿）")
     private ArticleEnum enabled;
 
+    @ApiModelProperty("文章热度")
+    private Long counts;
+
     @ApiModelProperty("用户id")
     private Integer userId;
 
@@ -53,6 +56,14 @@ public class Article implements Serializable {
     @ApiModelProperty("文章标签")
     @TableField(exist = false)
     private List<Tags> tags;
+
+    public Long getCounts() {
+        return counts;
+    }
+
+    public void setCounts(Long counts) {
+        this.counts = counts;
+    }
 
     public JSONObject getAuthor() {
         return author;
