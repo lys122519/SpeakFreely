@@ -1,9 +1,18 @@
 package com.sf.controller;
 
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.sf.actuator.SysData;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
+import com.sf.entity.Files;
+import com.sf.entity.Report;
+import com.sf.entity.dto.FileDataDto;
 import com.sf.entity.dto.InterfaceDto;
+import com.sf.entity.dto.SysDto;
+import com.sf.mapper.FilesMapper;
 import com.sf.service.impl.ActiveUserServiceImpl;
 import com.sf.utils.RedisUtils;
 import io.swagger.annotations.Api;
@@ -12,10 +21,7 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -40,6 +46,8 @@ public class DataController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    @Resource
+    private FilesMapper filesMapper;
 
     @GetMapping("/interface/{intCount}")
     @ApiOperation(value = "查找接口成功访问次数（默认倒序）")
@@ -94,4 +102,25 @@ public class DataController {
 
         return Result.success(activeList);
     }
+
+    @GetMapping("/fileCount/{intCount}")
+    @ApiOperation(value = "查询系统文件数", notes = "分类")
+    public Result<ArrayList<FileDataDto>> findFileCount(
+            @ApiParam(name = "intCount", value = "需要的类型数") @PathVariable Integer intCount
+
+    ) {
+        ArrayList<FileDataDto> fileDataDtos = (ArrayList<FileDataDto>) filesMapper.selectFileCount(intCount);
+        return Result.success(fileDataDtos);
+    }
+
+
+    @GetMapping("/sysInfo")
+    @ApiOperation(value = "获得系统重要信息")
+    public Result<SysDto> findSysInfo(){
+        SysDto sysInfo = SysData.getSysInfo();
+        return Result.success(sysInfo);
+    }
+
+
+
 }

@@ -16,7 +16,7 @@ import java.util.Objects;
  * @date: 2022-06-05 22:47
  */
 @Component
-public class ScheduledBean {
+public class ActiveScheduled {
 
     @Resource
     private ActiveUserServiceImpl activeUserService;
@@ -26,6 +26,7 @@ public class ScheduledBean {
 
 
     @Scheduled(cron = "0 0 0-23 * * ?")
+    //@Scheduled(cron = "0/5 * * * * ?")
     public void countActUser() {
 
         String nowTime = DateUtil.now();
