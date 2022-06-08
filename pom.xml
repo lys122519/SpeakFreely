@@ -135,7 +135,12 @@
             <artifactId>cglib</artifactId>
             <version>3.2.12</version>
         </dependency>
-
+        <!-- 获得本机信息-->
+        <dependency>
+            <groupId>com.github.oshi</groupId>
+            <artifactId>oshi-core</artifactId>
+            <version>6.1.6</version>
+        </dependency>
     </dependencies>
 
     <build>
