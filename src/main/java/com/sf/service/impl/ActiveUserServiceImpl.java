@@ -38,7 +38,7 @@ public class ActiveUserServiceImpl extends ServiceImpl<ActiveUserMapper, ActiveU
         QueryWrapper<ActiveUser> queryWrapper = new QueryWrapper<>();
 
         queryWrapper.select("DISTINCT user_id");
-        queryWrapper.between("time", startTime1, endTime1);
+        queryWrapper.between("time", endTime1, startTime1);
 
         Long count = activeUserMapper.selectCount(queryWrapper);
 
