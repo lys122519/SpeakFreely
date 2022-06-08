@@ -2,6 +2,8 @@ package com.sf.entity.dto;
 
 
 import com.sf.enums.SexEnum;
+import com.sf.enums.UserStateEnum;
+import io.swagger.annotations.ApiModelProperty;
 
 public class UserDTO {
     private Integer id;
@@ -17,6 +19,16 @@ public class UserDTO {
     private String code;
     private String token;
     private String userFace;
+    private UserStateEnum disabled;
+
+
+    public UserStateEnum getDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(UserStateEnum disabled) {
+        this.disabled = disabled;
+    }
 
     public String getUserFace() {
         return userFace;

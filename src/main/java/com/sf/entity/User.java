@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.sf.enums.SexEnum;
+import com.sf.enums.UserStateEnum;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -60,6 +61,18 @@ public class User implements Serializable {
 
     @ApiModelProperty("用户人脸")
     private String userFace;
+
+    @ApiModelProperty("用户禁用状态")
+    private UserStateEnum disabled;
+
+
+    public UserStateEnum getDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(UserStateEnum disabled) {
+        this.disabled = disabled;
+    }
 
     public String getUserFace() {
         return userFace;

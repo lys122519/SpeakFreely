@@ -48,6 +48,10 @@ public interface Constants {
      * redis文章top5信息缓存时长设置(单位为秒)
      */
     Integer ARTICLE_REDIS_TIMEOUT = 1800;
+    /**
+     * redis系统用户ID与tokenMap信息缓存时长设置(单位为秒)
+     */
+    Integer USERID_TOKEN_REDIS_TIMEOUT = 7200;
 
     /**
      * redis 接口访问次数信息缓存时长设置(单位为秒)

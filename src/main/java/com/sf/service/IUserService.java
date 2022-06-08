@@ -31,4 +31,8 @@ public interface IUserService extends IService<User> {
     void userSignOut(String token); // 用户登出
 
     void userLogout(UserDTO userDTO);// 用户注销
+
+    void userDisabled(Integer userID);// 用户状态禁用
+
+    void userEnable(Integer userID);// 解除用户禁用
 }

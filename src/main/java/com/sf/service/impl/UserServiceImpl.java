@@ -16,6 +16,7 @@ import com.sf.entity.ActiveUser;
 import com.sf.entity.User;
 import com.sf.entity.dto.UserDTO;
 import com.sf.enums.SexEnum;
+import com.sf.enums.UserStateEnum;
 import com.sf.exception.ServiceException;
 import com.sf.mapper.ActiveUserMapper;
 import com.sf.mapper.UserMapper;
@@ -31,10 +32,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMailMessage;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -66,11 +73,54 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     @Value("${spring.mail.username}")
     private String from; // 邮件发送者
 
+    @Override
+    public void userDisabled(Integer userID) {// 用户状态禁用
+        User user = userMapper.selectById(userID);
+        if (user.getDisabled() == UserStateEnum.ENABLE) {
+            // 1.修改数据库用户状态
+            user.setDisabled(UserStateEnum.DISABLED);// 将用户状态改为禁用
+            userMapper.updateById(user);// 将更新同步到数据库
+            // 2.获取用户token并删除该用户ID与token关系缓存(如果用户正在登录状态)
+            Map<Object, Object> userIDTokenMap = RedisUtils.mapFromRedis(StringConst.USERID_TOKEN_REDIS_KEY);
+            String token = (String) userIDTokenMap.get(userID.toString());
+            userIDTokenMap.remove(userID.toString());
+            // 必须将旧的map删除重建，否则被删掉的键值对无法同步删除
+            stringRedisTemplate.delete(StringConst.USERID_TOKEN_REDIS_KEY);
+            RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
+            stringRedisTemplate.persist(StringConst.USERID_TOKEN_REDIS_KEY);
+            //3.根据token删除用户信息缓存
+            if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
+                stringRedisTemplate.delete(token);
+            }
+        } else {
+            throw new ServiceException(Constants.CODE_400, "该用户已经是禁用状态！");
+        }
+    }
 
     @Override
-    public void userSignOut(String token) {// 登出(删除redis用户缓存信息)
+    public void userEnable(Integer userID) {// 解除用户禁用
+        User user = userMapper.selectById(userID);
+        if (user.getDisabled() == UserStateEnum.DISABLED) {
+            user.setDisabled(UserStateEnum.ENABLE);// 将用户状态改为启用
+            userMapper.updateById(user);// 将更新同步到数据库
+        } else {
+            throw new ServiceException(Constants.CODE_400, "该用户已经是启用状态！");
+        }
+    }
+
+    @Override
+    public void userSignOut(String token) {// 登出(删除redis用户信息及token关系缓存)
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
-            stringRedisTemplate.delete(token);
+            // 1.删除该用户ID与token关系缓存
+            Map<Object, Object> userIDTokenMap = RedisUtils.mapFromRedis(StringConst.USERID_TOKEN_REDIS_KEY);
+            userIDTokenMap.remove(RedisUtils.getCurrentUserId(token).toString());
+            stringRedisTemplate.delete(StringConst.USERID_TOKEN_REDIS_KEY);
+            RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
+            stringRedisTemplate.persist(StringConst.USERID_TOKEN_REDIS_KEY);
+            // 2.删除用户信息缓存
+            if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
+                stringRedisTemplate.delete(token);
+            }
         } else {
             throw new ServiceException(Constants.CODE_400, "用户并未登录！");
         }
@@ -85,7 +135,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             String email = userDTO.getEmail(); // 从redis缓存中获取email
             if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
                 // 1.检测有人脸信息则删除人脸库人脸信息
-                if (!Objects.equals(userDTO.getUserFace(), "null") &&faceDelete(userDTO.getId().toString(),userDTO.getUserFace())==null) {//判断是否存在人脸信息
+                if (!Objects.equals(userDTO.getUserFace(), "null") && faceDelete(userDTO.getId().toString(), userDTO.getUserFace()) == null) {//判断是否存在人脸信息
                     // 有人脸且删除失败则抛出异常
                     throw new ServiceException(Constants.CODE_600, "人脸删除失败");
                 }
@@ -120,6 +170,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             user = checkUser(StringConst.USERNAME_LOGIN, "username", username); // 用户名登录方式
         }
         if (user != null && password.equals(user.getPassword())) { // 用户存在且密码一致
+            Map<Object, Object> userIDTokenMap = RedisUtils.mapFromRedis(StringConst.USERID_TOKEN_REDIS_KEY);
+            if (user.getDisabled() == UserStateEnum.DISABLED) { // 判断用户是否被禁用
+                throw new ServiceException(Constants.CODE_400, "该账号已经被禁用！");
+            }
+            if (userIDTokenMap.containsKey(user.getId().toString())) { // 判断是否已登录
+                throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
+            }
             //将用户登录信息存入活跃用户表
             ActiveUser activeUser = new ActiveUser();
             activeUser.setTime(DateUtil.now());
@@ -166,6 +223,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 QueryWrapper<User> userQueryWrapper = new QueryWrapper<>();
                 userQueryWrapper.eq("id", userResult.get(0).get("user_id"));
                 user = userMapper.selectOne(userQueryWrapper);
+
+                Map<Object, Object> userIDTokenMap = RedisUtils.mapFromRedis(StringConst.USERID_TOKEN_REDIS_KEY);
+                if (user.getDisabled() == UserStateEnum.DISABLED) { // 判断用户是否被禁用
+                    throw new ServiceException(Constants.CODE_400, "该账号已经被禁用！");
+                }
+                if (userIDTokenMap.containsKey(user.getId().toString())) { // 判断是否已登录
+                    throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
+                }
 
                 //将用户登录信息存入活跃用户表
                 ActiveUser activeUser = new ActiveUser();
@@ -368,7 +433,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             String title = getEmailTitle(action, email); // 先获取对应邮件标题
             String code = RandomUtil.randomString(4); // 再获取验证码
             String content = "您本次操作的验证码为: " + code + "，两分钟内有效！"; // 设置邮件内容(复杂时可考虑封装)
-            SimpleMailMessage mailMessage = createMail(email, title, content); // 获取对应邮件实例
+            MimeMessage mailMessage = javaMailSender.createMimeMessage();
+            try {
+                MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true, "UTF-8");
+                messageHelper.setFrom(from); // 设置发件人Email
+                messageHelper.setSubject(title); // 设置邮件主题
+                messageHelper.setText(content); // 设置邮件主题内容
+                messageHelper.setTo(email); // 设定收件人Email
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
             javaMailSender.send(mailMessage); // 发送邮件
             //将code放入redis 120s过期
             stringRedisTemplate.opsForValue().set(StringConst.CODE_EMAIL + email, code, 120, TimeUnit.SECONDS);
@@ -388,14 +462,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 throw new ServiceException(Constants.CODE_400, "未知操作");
             }
         } else { // 其他操作需用户存在
-            if (action.equals(StringConst.EMAIL_PWD_RESET)) { // 重置密码邮件
-                return "密码重置验证码";
-            } else if (action.equals(StringConst.EMAIL_INFO_MODIFY)) { // 信息修改邮件
-                return "用户信息修改验证码";
-            } else if (action.equals(StringConst.EMAIL_LOGOUT)) { // 用户注销邮件
-                return "用户注销验证码";
-            } else { // 用户存在时可以进行的操作均未执行则抛出异常
-                throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
+            switch (action) {
+                case StringConst.EMAIL_PWD_RESET:  // 重置密码邮件
+                    return "密码重置验证码";
+                case StringConst.EMAIL_INFO_MODIFY:  // 信息修改邮件
+                    return "用户信息修改验证码";
+                case StringConst.EMAIL_LOGOUT:  // 用户注销邮件
+                    return "用户注销验证码";
+                default:  // 用户存在时可以进行的操作均未执行则抛出异常
+                    throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
             }
         }
     }
@@ -418,6 +493,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             userDTO.setToken(token); // 不存在则设置用户token
             //将用户缓存存入redis
             RedisUtils.objToRedis(token, userDTO, Constants.USER_REDIS_TIMEOUT);
+            // 将用户id与token对应关系以map存入redis
+            Map<Object, Object> userIDTokenMap = new HashMap<>();
+            if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(StringConst.USERID_TOKEN_REDIS_KEY))) {
+                userIDTokenMap = RedisUtils.mapFromRedis(StringConst.USERID_TOKEN_REDIS_KEY);
+            }
+            userIDTokenMap.put(userDTO.getId().toString(), userDTO.getToken());
+            // 将系统用户ID与token的Map存入redis并设置永不过期
+            RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
+            stringRedisTemplate.persist(StringConst.USERID_TOKEN_REDIS_KEY);
         } else {//根据token获取redis中的用户信息
             JSONObject userFromRedis = RedisUtils.getUserRedis(token);
             setUserRedis(userDTO, userFromRedis); // 用户redis缓存同步
