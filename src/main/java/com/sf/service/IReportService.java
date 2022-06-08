@@ -37,5 +37,5 @@ public interface IReportService extends IService<Report> {
      * @param reportDto
      * @return
      */
-    IPage<Report> getPage(Integer pageNum, Integer pageSize, ReportDto reportDto);
+    IPage<ReportDto> getPage(Integer pageNum, Integer pageSize, ReportDto reportDto);
 }

@@ -70,6 +70,6 @@ public interface ICommentService extends IService<Comment> {
      * @param comment
      * @return
      */
-    IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment);
+    IPage<CommentDto> getPage(Integer pageNum, Integer pageSize, CommentDto commentDto);
 
 }

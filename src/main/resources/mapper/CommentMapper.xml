@@ -1,15 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sf.mapper.CommentMapper">
-    <resultMap id="pageUser" type="com.sf.entity.dto.CommentDto">
-        <result column="id" property="id"/>
-        <result column="userId" property="userId"/>
-        <result column="content" property="content"/>
-        <result column="time" property="time"/>
-        <result column="articleId" property="articleId"/>
-        <result column="nickname" property="nickname"/>
-
-    </resultMap>
 
     <select id="findCommentDetail" resultType="com.sf.entity.Comment">
         select c.*, u.nickname, u.avatar_url
@@ -43,8 +34,12 @@
             <if test="content!=null and content!=''">
                 and c.content like concat('%',#{content},'%')
             </if>
+            <if test="userId!=null and userId!=''">
+                and c.user_id = #{userId}
+            </if>
+            and c.deleted = 0
         </where>
-        and c.deleted = 0
-        order by c.id desc
+
+        order by c.time desc
     </select>
 </mapper>

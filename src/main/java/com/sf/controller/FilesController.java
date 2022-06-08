@@ -121,7 +121,7 @@ public class FilesController {
     @GetMapping("/page")
     public Result<IPage<Files>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
                                          @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                         @ApiParam(name = "files", value = "file对象") @RequestBody Files files
+                                         @ApiParam(name = "files", value = "file对象") Files files
     ) {
         IPage<Files> page = fileService.getPage(pageNum, pageSize, files);
         if (pageNum > page.getPages()) {

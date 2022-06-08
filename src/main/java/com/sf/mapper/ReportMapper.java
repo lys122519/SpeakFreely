@@ -25,5 +25,5 @@ public interface ReportMapper extends BaseMapper<Report> {
      * @param report
      * @return
      */
-    IPage<ReportDto> findPage(IPage<Report> page, @Param("report") ReportDto reportDto);
+    IPage<ReportDto> findPage(IPage<ReportDto> page, @Param("report") ReportDto reportDto);
 }

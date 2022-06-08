@@ -3,6 +3,7 @@ package com.sf.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
+import com.sf.config.AuthAccess;
 import com.sf.entity.Comment;
 import com.sf.entity.dto.CommentDto;
 import com.sf.service.ICommentService;
@@ -81,19 +82,20 @@ public class CommentController {
     }
 
     @GetMapping("/page")
-    @ApiOperation(value = "分页查找", notes = "支持按内容查找")
-    public Result<IPage<Comment>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+    @ApiOperation(value = "后台分页查找", notes = "支持按内容和用户id查找")
+    public Result<IPage<CommentDto>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
                                            @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                           @ApiParam(name = "comment", value = "Comment对象") @RequestBody Comment comment
+                                           @ApiParam(name = "comment", value = "Comment对象") CommentDto commentDto
     ) {
-        IPage<Comment> page = commentService.getPage(pageNum, pageSize, comment);
+        IPage<CommentDto> page = commentService.getPage(pageNum, pageSize, commentDto);
         if (pageNum > page.getPages()) {
-            page = commentService.getPage((int) page.getPages(), pageSize, comment);
+            page = commentService.getPage((int) page.getPages(), pageSize, commentDto);
         }
 
         return Result.success(page);
     }
 
+    @AuthAccess
     @GetMapping("/tree/{articleId}")
     @ApiOperation(value = "根据文章id查找评论")
     public Result<IPage<Comment>> findTree(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,

@@ -39,9 +39,10 @@ public interface CommentMapper extends BaseMapper<Comment> {
 
     /**
      * 分页查找
-     *
      * @param page
      * @param content
+     * @param userId
+     * @return
      */
-    IPage<CommentDto> findPage(IPage<Comment> page, @Param("content") String content, @Param("content") Integer id);
+    IPage<CommentDto> findPage(IPage<CommentDto> page, @Param("content") String content, @Param("userId") Integer userId);
 }

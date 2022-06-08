@@ -63,11 +63,11 @@ public class ReportController {
 
     @GetMapping("/page")
     @ApiOperation(value = "分页查找", notes = "根据举报时间降序(根据内容，用户昵称，是否已处理)")
-    public Result<IPage<Report>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
-                                          @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                          @ApiParam(name = "ReportDto", value = "ReportDto对象") @RequestBody ReportDto reportDto
+    public Result<IPage<ReportDto>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+                                             @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
+                                             ReportDto reportDto
     ) {
-        IPage<Report> page = reportService.getPage(pageNum, pageSize, reportDto);
+        IPage<ReportDto> page = reportService.getPage(pageNum, pageSize, reportDto);
         if (pageNum > page.getPages()) {
             page = reportService.getPage((int) page.getPages(), pageSize, reportDto);
         }

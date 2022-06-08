@@ -60,20 +60,10 @@ public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> impleme
      * @return
      */
     @Override
-    public IPage<Report> getPage(Integer pageNum, Integer pageSize, ReportDto reportDto) {
-        //LambdaQueryWrapper<Report> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        //
-        //lambdaQueryWrapper.like(Strings.isNotEmpty(report.getContent()), Report::getContent, report.getContent());
-        //lambdaQueryWrapper.eq(ObjectUtil.isNotNull(report.getExecd()), Report::getExecd, report.getExecd());
-        //
-        //lambdaQueryWrapper.orderByDesc(Report::getTime);
-        //
-        //
-        IPage<Report> page = new Page<>(pageNum, pageSize);
-        //reportMapper.selectPage(page, lambdaQueryWrapper);
+    public IPage<ReportDto> getPage(Integer pageNum, Integer pageSize, ReportDto reportDto) {
+
+        IPage<ReportDto> page = new Page<>(pageNum, pageSize);
         reportMapper.findPage(page, reportDto);
-
-
         return page;
 
     }

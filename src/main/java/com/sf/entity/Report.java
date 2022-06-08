@@ -32,7 +32,7 @@ public class Report implements Serializable {
     @ApiModelProperty(value = "违规文章ID", required = true)
     private Integer articleId;
 
-    @ApiModelProperty(value = "违规评论ID", required = true)
+    @ApiModelProperty(value = "违规评论ID")
     private Integer commentId;
 
     @ApiModelProperty(value = "举报理由", required = true)

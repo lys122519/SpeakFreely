@@ -212,10 +212,9 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      * @return
      */
     @Override
-    public IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment) {
-        Page<Comment> page = new Page<>(pageNum, pageSize);
-        commentMapper.findPage(page, comment.getContent(), comment.getId());
-
+    public IPage<CommentDto> getPage(Integer pageNum, Integer pageSize, CommentDto commentDto) {
+        Page<CommentDto> page = new Page<>(pageNum, pageSize);
+        commentMapper.findPage(page, commentDto.getContent(), commentDto.getUserId());
         return page;
 
     }

@@ -1,8 +1,10 @@
 package com.sf.entity.dto;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModelProperty;
+import org.apache.poi.ss.formula.functions.T;
 
 /**
  * @Description:
@@ -19,6 +21,7 @@ public class ReportDto {
     private Integer userId;
 
     @ApiModelProperty("举报人名称")
+    @TableField(exist = false)
     private String nickName;
 
     @ApiModelProperty("举报时间")
@@ -28,13 +31,15 @@ public class ReportDto {
     private Integer articleId;
 
     @ApiModelProperty(value = "违规文章标题")
+    @TableField(exist = false)
     private String articleName;
 
     @ApiModelProperty(value = "违规评论ID")
     private Integer commentId;
 
     @ApiModelProperty(value = "违规评论内容")
-    private Integer commentContent;
+    @TableField(exist = false)
+    private String commentContent;
 
     @ApiModelProperty(value = "举报理由")
     private String content;
@@ -109,11 +114,11 @@ public class ReportDto {
         this.commentId = commentId;
     }
 
-    public Integer getCommentContent() {
+    public String getCommentContent() {
         return commentContent;
     }
 
-    public void setCommentContent(Integer commentContent) {
+    public void setCommentContent(String commentContent) {
         this.commentContent = commentContent;
     }
 

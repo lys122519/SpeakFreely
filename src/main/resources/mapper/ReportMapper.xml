@@ -13,15 +13,11 @@
         on t.article_id = a.id
         <where>
             <if test="report.content!=null and report.content!=''">
-                and c.content like concat('%',#{report.content},'%')
+                and t.content like '%${report.content}%'
             </if>
-        </where>
-        <where>
             <if test="report.nickname!=null and report.nickname!=''">
-                and u.nickname like concat('%',#{report.nickName},'%')
+                and u.nickname  like '%${report.nickname}%'
             </if>
-        </where>
-        <where>
             <if test="report.execd!=null and report.execd!=''">
                 and t.execd = #{report.execd}
             </if>
