@@ -127,37 +127,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             origin.setChildren(comments);
         }
         Page<Comment> page = new Page<>(pageNum, pageSize);
-        page = pageArticleList(page, originList);
+        page = pageCommentList(page, originList);
 
         return page;
     }
-
-    //@Override
-    //public List<Comment> findReply(Integer articleId) {
-    //
-    //    //查询评论及回复
-    //    List<Comment> articleComments = commentMapper.findCommentDetail(articleId);
-    //
-    //    //查询评论
-    //    List<Comment> originList = articleComments.stream().filter(comment -> comment.getOriginId() == null).collect(Collectors.toList());
-    //
-    //    //设置评论的回复
-    //    for (Comment origin : originList) {
-    //        //comments为回复对象集合
-    //        List<Comment> comments = articleComments.stream().filter(comment -> origin.getId().equals(comment.getOriginId())).collect(Collectors.toList());
-    //        comments.forEach(comment -> {
-    //            Optional<Comment> pComment = articleComments.stream().filter(c1 -> c1.getId().equals(comment.getPid())).findFirst();
-    //            pComment.ifPresent((v -> {
-    //                //找到父级评论的用户id和用户昵称，并设置给当前回复对象
-    //                comment.setpUserId(v.getUserId());
-    //                comment.setpNickName(v.getNickname());
-    //            }));
-    //        });
-    //
-    //        origin.setChildren(comments);
-    //    }
-    //    return originList;
-    //}
 
     /**
      * 根据评论id删除评论及回复
@@ -224,7 +197,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 comment.setpUserId(userId);
             }
         }
-        Page<Comment> commentPage = pageArticleList(page, comments);
+        Page<Comment> commentPage = pageCommentList(page, comments);
 
         return commentPage;
 
@@ -254,10 +227,10 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      * @param records
      * @return
      */
-    public Page<Comment> pageArticleList(Page<Comment> page, List<Comment> records) {
-        // 根据文章总数设置分页数据总数
+    public Page<Comment> pageCommentList(Page<Comment> page, List<Comment> records) {
+        // 根据总数设置分页数据总数
         page.setTotal(records.size());
-        // 根据文章总数设置分页页码总数
+        // 根据总数设置分页页码总数
         page.setPages((records.size() + page.getSize() - 1) / page.getSize());
         // 计算偏移量和切片位置下标(以获取指定页码的文章)
         int offset = Math.toIntExact((page.getCurrent() - 1) * page.getSize());
@@ -266,7 +239,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
             // 如果当前切片结束位置超出数据总数，将其置为总数
             end = records.size();
         }
-        // 将切片后的文章列表放入分页记录列表
+        // 将切片后的列表放入分页记录列表
         return page.setRecords(records.subList(offset, end));
     }
 
