@@ -90,32 +90,27 @@ public class ArticleController {
     public Result<IPage<ArticleDTO>> getSelfArticle(@PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
         // 作者获取自身文章列表(包含作者信息)
         Integer id = RedisUtils.getCurrentUserId(TokenUtils.getToken());// 根据token获取作者id
-        return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type));
+        return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type, null));
     }
 
     @AuthAccess
     @GetMapping("/author/{id}/{type}/{page}/{limit}")
     @ApiOperation(value = "指定作者id获取文章列表(不包含文章内容，包含作者和标签信息)", notes = "用户已登录,请求路径包含文章作者id,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> getAuthorArticle(@PathVariable Integer id, @PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
-        return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type));
+        return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type, null));
     }
 
     @GetMapping("/{type}/{page}/{limit}")
-    @ApiOperation(value = "分页获取所有作者文章列表(不包含文章内容，包含作者和标签)", notes = "用户已登录,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
-    public Result<IPage<ArticleDTO>> getArticleList(@PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
-        return Result.success(articleService.pageArticle(new Page<>(page, limit), null, type));
+    @ApiOperation(value = "分页获取所有作者文章列表(不包含文章内容，包含作者和标签)", notes = "用户已登录,searchArticleTitle(要获取的文章标题),type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> getArticleList(ArticleDTO articleDTO, @PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
+        return Result.success(articleService.pageArticle(new Page<>(page, limit), null, type, articleDTO.getSearchArticleTitle()));
     }
 
     @AuthAccess
     @GetMapping("/search/{page}/{limit}")
-    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(tagID(标签ID),title(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
-    public Result<IPage<ArticleDTO>> pageSearchArticle(@RequestParam String tagID,@RequestParam String title, @PathVariable Integer page, @PathVariable Integer limit) {
-        ArticleDTO articleDTO = new ArticleDTO();
-        if(StrUtil.isNotBlank(tagID)){
-            articleDTO.setSearchTagID(Integer.valueOf(tagID));
-        }
-        articleDTO.setSearchArticleTitle(title);
-        if (StrUtil.isNotBlank(tagID) || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
+    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> pageSearchArticle(ArticleDTO articleDTO, @PathVariable Integer page, @PathVariable Integer limit) {
+        if (StrUtil.isNotBlank(articleDTO.getTagsID()) || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
             return Result.success(articleService.pageSearchArticle(new Page<>(page, limit), articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
         } else {
             throw new ServiceException(Constants.CODE_400, "标签ID和文章标题不能全为空!");
@@ -137,5 +132,19 @@ public class ArticleController {
         } else {
             throw new ServiceException(Constants.CODE_400, "参数异常!");
         }
+    }
+    @AuthAccess
+    @PostMapping("/addCounts/{articleID}")
+    @ApiOperation(value = "增加访问量", notes = "文章id", httpMethod = "POST")
+    public Result<Void> addCounts(@PathVariable Integer articleID) {
+        articleService.addCounts(articleID);
+        return Result.success();
+    }
+
+    @AuthAccess
+    @GetMapping("/top5")
+    @ApiOperation(value = "返回文章热度前5个(半小时更新一次)", notes = "", httpMethod = "GET")
+    public Result<List<JSONObject>> getTop5() {
+        return Result.success(articleService.getTop5());
     }
 }

@@ -57,6 +57,12 @@ public interface StringConst {
      */
     String TAGS_REDIS_KEY = "tagsMapRedis";
 
+    /**
+     * 2.2 ArticleTop5缓存(访问量前5个Article对象的Map缓存)
+     * Map<文章id, Article转JsonObject再转String>
+     */
+    String ARTICLE_REDIS_KEY = "articleMapRedis";
+
 
     /*3.一组对象以List缓存(实测同样的数据比Map方式占内存，且理论上字典结构比列表结构存取速度快)*/
     /*存的时候是以List<对象转Json对象再转字符串>形式*/

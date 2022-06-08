@@ -46,6 +46,11 @@ public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements IT
             QueryWrapper<Tags> queryWrapper = new QueryWrapper<>();
             queryWrapper.orderByDesc("counts");
             List<Tags> tagList = tagsMapper.selectList(queryWrapper); // 查询排序结果
+            //按counts排序
+            tagList.sort((o1, o2) -> {
+                if (o1.getCounts() < o2.getCounts()) return 1;
+                else return -1;
+            });
             if (tagList.size() > 100) { // 超过100个标签则进行切片
                 tagList = tagList.subList(0, 100);
             }
@@ -54,6 +59,20 @@ public class TagsServiceImpl extends ServiceImpl<TagsMapper, Tags> implements IT
             }
             //将tagTop100放入redis(并设置过期时长)
             RedisUtils.mapToRedis(StringConst.TAGS_REDIS_KEY, tagTop100, Constants.TAG_REDIS_TIMEOUT);
+        } else { // redis已存在标签map缓存信息
+            // 将map还原为list进行排序
+            List<JSONObject> articleList = RedisUtils.jsonListFromMap(tagTop100);
+            tagTop100.clear();//清空map，重新排序
+            //按counts排序
+            articleList.sort((o1, o2) -> {
+                if (Integer.parseInt(String.valueOf(o1.get("counts"))) < Integer.parseInt(String.valueOf(o2.get("counts"))))
+                    return 1;
+                else return -1;
+            });
+            // 将排序结果压入map
+            for (JSONObject article : articleList) { // 将标签对象(先变成json对象再转为字符串)压入文章topMap
+                tagTop100.put(article.get("id").toString(), new JSONObject(article).toString());
+            }
         }
         return RedisUtils.jsonListFromMap(tagTop100);
     }

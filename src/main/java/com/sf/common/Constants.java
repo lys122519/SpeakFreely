@@ -44,6 +44,10 @@ public interface Constants {
      * redis标签top100信息缓存时长设置(单位为秒)
      */
     Integer TAG_REDIS_TIMEOUT = 3600;
+    /**
+     * redis文章top5信息缓存时长设置(单位为秒)
+     */
+    Integer ARTICLE_REDIS_TIMEOUT = 1800;
 
     /**
      * redis 接口访问次数信息缓存时长设置(单位为秒)
