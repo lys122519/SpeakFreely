@@ -104,9 +104,14 @@ public class ArticleController {
     }
 
     @GetMapping("/search/{page}/{limit}")
-    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
-    public Result<IPage<ArticleDTO>> pageSearchArticle(@RequestBody ArticleDTO articleDTO, @PathVariable Integer page, @PathVariable Integer limit) {
-        if (articleDTO.getSearchTagID() != null && !articleDTO.getSearchTagID().toString().equals("") || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
+    @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(tagID(标签ID),title(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<IPage<ArticleDTO>> pageSearchArticle(@RequestParam String tagID,@RequestParam String title, @PathVariable Integer page, @PathVariable Integer limit) {
+        ArticleDTO articleDTO = new ArticleDTO();
+        if(StrUtil.isNotBlank(tagID)){
+            articleDTO.setSearchTagID(Integer.valueOf(tagID));
+        }
+        articleDTO.setSearchArticleTitle(title);
+        if (StrUtil.isNotBlank(tagID) || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
             return Result.success(articleService.pageSearchArticle(new Page<>(page, limit), articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
         } else {
             throw new ServiceException(Constants.CODE_400, "标签ID和文章标题不能全为空!");
