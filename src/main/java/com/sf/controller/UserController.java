@@ -85,6 +85,30 @@ public class UserController {
         return Result.success(userService.page(new Page<>(pageNum, pageSize)));
     }
 
+    @ApiOperation(value = "用户登出", notes = "必须参数：token(headers)", httpMethod = "POST")
+    @PostMapping("/signOut")
+    public Result<String> signOut(@RequestBody UserDTO userDTO) {
+        userDTO.setToken(TokenUtils.getToken());
+        if (StrUtil.isNotBlank(userDTO.getToken())) {
+            userService.userSignOut(userDTO.getToken());
+            return Result.success("用户已登出");
+        } else {
+            throw new ServiceException(Constants.CODE_400, "参数异常!");
+        }
+    }
+
+    @ApiOperation(value = "用户注销", notes = "必须参数：token(headers)+code()", httpMethod = "POST")
+    @PostMapping("/logout")
+    public Result<String> userLogout(@RequestBody UserDTO userDTO) {
+        userDTO.setToken(TokenUtils.getToken());
+        if (StrUtil.isNotBlank(userDTO.getToken())&&StrUtil.isNotBlank(userDTO.getCode())) {
+            userService.userLogout(userDTO);
+            return Result.success("账号已注销");
+        } else {
+            throw new ServiceException(Constants.CODE_400, "参数异常!");
+        }
+    }
+
     @ApiOperation(value = "用户登录", notes = "必须参数：username/email + password/userFace(BASE64)", httpMethod = "POST")
     @PostMapping("/login")
     public Result<UserDTO> userLogin(@RequestBody UserDTO userDTO) {
@@ -153,7 +177,7 @@ public class UserController {
     }
 
     @AuthAccess
-    @ApiOperation(value = "发送邮箱验证码", notes = "action:emailRegister(注册邮件)/emailPwdReset(忘记密码)/emailInfoModify(信息修改)/emailModify(邮箱换绑);email为目标邮箱", httpMethod = "POST")
+    @ApiOperation(value = "发送邮箱验证码", notes = "action:emailRegister(注册邮件)/emailLogout(注销邮件)/emailPwdReset(忘记密码)/emailInfoModify(信息修改)/emailModify(邮箱换绑);email为目标邮箱", httpMethod = "POST")
     @PostMapping("/emailCode/{action}/{email}")
     public Result<String> sendEmailCode(@PathVariable String action, @PathVariable String email) {
         if (StrUtil.isNotBlank(action) && StrUtil.isNotBlank(email)) { // 检验参数是否均不为空
