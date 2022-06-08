@@ -97,11 +97,13 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     /**
      * 根据id查找评论及回复
      *
+     * @param pageNum
+     * @param pageSize
      * @param articleId
      * @return
      */
     @Override
-    public List<Comment> findReply(Integer articleId) {
+    public IPage<Comment> findReply(Integer pageNum, Integer pageSize, Integer articleId) {
 
         //查询评论及回复
         List<Comment> articleComments = commentMapper.findCommentDetail(articleId);
@@ -124,8 +126,38 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
             origin.setChildren(comments);
         }
-        return originList;
+        Page<Comment> page = new Page<>(pageNum, pageSize);
+        page = pageArticleList(page, originList);
+
+        return page;
     }
+
+    //@Override
+    //public List<Comment> findReply(Integer articleId) {
+    //
+    //    //查询评论及回复
+    //    List<Comment> articleComments = commentMapper.findCommentDetail(articleId);
+    //
+    //    //查询评论
+    //    List<Comment> originList = articleComments.stream().filter(comment -> comment.getOriginId() == null).collect(Collectors.toList());
+    //
+    //    //设置评论的回复
+    //    for (Comment origin : originList) {
+    //        //comments为回复对象集合
+    //        List<Comment> comments = articleComments.stream().filter(comment -> origin.getId().equals(comment.getOriginId())).collect(Collectors.toList());
+    //        comments.forEach(comment -> {
+    //            Optional<Comment> pComment = articleComments.stream().filter(c1 -> c1.getId().equals(comment.getPid())).findFirst();
+    //            pComment.ifPresent((v -> {
+    //                //找到父级评论的用户id和用户昵称，并设置给当前回复对象
+    //                comment.setpUserId(v.getUserId());
+    //                comment.setpNickName(v.getNickname());
+    //            }));
+    //        });
+    //
+    //        origin.setChildren(comments);
+    //    }
+    //    return originList;
+    //}
 
     /**
      * 根据评论id删除评论及回复
@@ -209,7 +241,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     @Override
     public IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment) {
         Page<Comment> page = new Page<>(pageNum, pageSize);
-        commentMapper.findPage(page, comment.getContent());
+        commentMapper.findPage(page, comment.getContent(), comment.getId());
 
         return page;
 
@@ -217,6 +249,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
     /**
      * 对查询到的列表进行分页
+     *
      * @param page
      * @param records
      * @return
@@ -237,28 +270,4 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         return page.setRecords(records.subList(offset, end));
     }
 
-    ///**
-    // * 分页查找
-    // *
-    // * @param pageNum
-    // * @param pageSize
-    // * @param comment
-    // * @return
-    // */
-    //@Override
-    //public IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment) {
-    //    LambdaQueryWrapper<Comment> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-    //
-    //    lambdaQueryWrapper.like(Strings.isNotEmpty(comment.getContent()), Comment::getContent, comment.getContent());
-    //    //lambdaQueryWrapper.eq(ObjectUtil.isNotNull(comment.getEnabled()), Comment::getEnabled, comment.getEnabled());
-    //    //
-    //    //lambdaQueryWrapper.like(Strings.isNotEmpty(comment.getType()), Comment::getType, comment.getType());
-    //
-    //    IPage<Comment> page = new Page<>(pageNum, pageSize);
-    //    commentMapper.selectPage(page, lambdaQueryWrapper);
-    //
-    //
-    //    return page;
-    //
-    //}
 }

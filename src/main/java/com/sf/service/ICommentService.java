@@ -39,7 +39,7 @@ public interface ICommentService extends IService<Comment> {
      * @param articleId
      * @return
      */
-    List<Comment> findReply(Integer articleId);
+    IPage<Comment> findReply(Integer pageNum, Integer pageSize, Integer articleId);
 
     /**
      * 根据评论id删除评论及回复
@@ -71,4 +71,5 @@ public interface ICommentService extends IService<Comment> {
      * @return
      */
     IPage<Comment> getPage(Integer pageNum, Integer pageSize, Comment comment);
+
 }

@@ -96,10 +96,16 @@ public class CommentController {
 
     @GetMapping("/tree/{articleId}")
     @ApiOperation(value = "根据文章id查找评论")
-    public Result<List<Comment>> findTree(@ApiParam(name = "articleId", value = "文章id", required = true) @PathVariable Integer articleId) {
+    public Result<IPage<Comment>> findTree(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+                                           @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
+                                           @ApiParam(name = "articleId", value = "文章id", required = true) @PathVariable Integer articleId) {
 
-        List<Comment> replyList = commentService.findReply(articleId);
+        IPage<Comment> page = commentService.findReply(pageNum, pageSize, articleId);
+        if (pageNum > page.getPages()) {
+            page = commentService.findReply((int) page.getPages(), pageSize, articleId);
+        }
 
-        return Result.success(replyList);
+
+        return Result.success(page);
     }
 }

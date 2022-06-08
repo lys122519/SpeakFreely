@@ -43,5 +43,5 @@ public interface CommentMapper extends BaseMapper<Comment> {
      * @param page
      * @param content
      */
-    IPage<CommentDto> findPage(IPage<Comment> page, @Param("content") String content);
+    IPage<CommentDto> findPage(IPage<Comment> page, @Param("content") String content, @Param("content") Integer id);
 }
