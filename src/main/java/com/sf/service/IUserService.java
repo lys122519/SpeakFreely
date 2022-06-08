@@ -26,5 +26,9 @@ public interface IUserService extends IService<User> {
 
     UserDTO emailModify(UserDTO userDTO); // 用户邮箱换绑接口
 
-    JSONObject faceUpload(UserDTO userDTO);
+    JSONObject faceUpload(UserDTO userDTO); // 用户人脸录入
+
+    void userSignOut(String token); // 用户登出
+
+    void userLogout(UserDTO userDTO);// 用户注销
 }

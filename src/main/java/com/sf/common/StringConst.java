@@ -105,6 +105,10 @@ public interface StringConst {
      */
     String EMAIL_REGISTER = "emailRegister";
     /**
+     * 邮件为注销邮件
+     */
+    String EMAIL_LOGOUT = "emailLogout";
+    /**
      * 邮件为换绑邮件
      */
     String EMAIL_MODIFY = "emailModify";

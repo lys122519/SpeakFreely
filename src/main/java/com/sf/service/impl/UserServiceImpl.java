@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,6 +65,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
 
     @Value("${spring.mail.username}")
     private String from; // 邮件发送者
+
+
+    @Override
+    public void userSignOut(String token) {// 登出(删除redis用户缓存信息)
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
+            stringRedisTemplate.delete(token);
+        } else {
+            throw new ServiceException(Constants.CODE_400, "用户并未登录！");
+        }
+    }
+
+    @Override
+    public void userLogout(UserDTO userDTO) {// 注销(删除redis用户缓存信息)
+        // 通过token查询redis中的用户信息
+        JSONObject userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
+        setUserRedis(userDTO, userFromRedis);
+        if (StrUtil.isNotBlank(userDTO.getCode())) {
+            String email = userDTO.getEmail(); // 从redis缓存中获取email
+            if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
+                // 1.检测有人脸信息则删除人脸库人脸信息
+                if (!Objects.equals(userDTO.getUserFace(), "null") &&faceDelete(userDTO.getId().toString(),userDTO.getUserFace())==null) {//判断是否存在人脸信息
+                    // 有人脸且删除失败则抛出异常
+                    throw new ServiceException(Constants.CODE_600, "人脸删除失败");
+                }
+                // 2.删除用户缓存
+                userSignOut(userDTO.getToken());
+                // 3.从数据库删除用户信息
+                userMapper.deleteById(userDTO.getId());
+                // 4.操作成功，删除redis缓存中对应的验证码信息
+                stringRedisTemplate.delete(StringConst.CODE_EMAIL + email);
+            } else {
+                throw new ServiceException(Constants.CODE_600, "验证码不匹配");
+            }
+        }
+    }
 
     @Override
     public UserDTO userLogin(String username, String password, String userFace) { // 用户登录
@@ -255,7 +291,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         String accessToken = StringConst.BAIDU_ACCESS_TOKEN;
 
         String result = null;
-        try {
+        try { // 发送人脸更新请求
             result = HttpUtil.post(url, accessToken, "application/json", jsonUpload.toString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -269,10 +305,41 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             user.setUserFace(jsonResult.get("face_token").toString());
             user.setId(RedisUtils.getCurrentUserId(userDTO.getToken())); // 设置用户id
             userMapper.updateById(user); // 将人脸token信息更新同步到数据库
+            userDTO.setUserFace(jsonResult.get("face_token").toString());
+            JSONObject userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
+            setUserRedis(userDTO, userFromRedis); // 用户redis缓存同步
+            //将用户缓存存入redis
+            RedisUtils.objToRedis(userDTO.getToken(), userFromRedis, Constants.USER_REDIS_TIMEOUT);
         }  // 上传失败直接将失败结果返回
         return jsonResult;
     }
 
+    /*从人脸库删除人脸操作*/
+    public JSONObject faceDelete(String user_id, String faceToken) {
+        // 请求url
+        String url = "https://aip.baidubce.com/rest/2.0/face/v3/faceset/face/delete";
+        // 设置请求体json格式参数
+        JSONObject jsonDelete = new JSONObject();
+        jsonDelete.set("face_token", faceToken);
+        jsonDelete.set("group_id", "speakfreely");
+        jsonDelete.set("user_id", user_id);
+
+        // 注意这里仅为了简化编码每一次请求都去获取access_token，线上环境access_token有过期时间， 客户端可自行缓存，过期后重新获取。
+        String accessToken = StringConst.BAIDU_ACCESS_TOKEN;
+
+        String result = null;
+        try {// 发送人脸删除请求
+            result = HttpUtil.post(url, accessToken, "application/json", jsonDelete.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        JSONObject jsonResult = new JSONObject(result);
+        if (jsonResult.get("error_code").equals(0)) {// 检验是否删除成功
+            return jsonResult;
+        } else {
+            return null;// 删除失败返回null
+        }
+    }
 
     @Override
     public void userPwdReset(String email, String newPwd, String code) {
@@ -325,6 +392,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 return "密码重置验证码";
             } else if (action.equals(StringConst.EMAIL_INFO_MODIFY)) { // 信息修改邮件
                 return "用户信息修改验证码";
+            } else if (action.equals(StringConst.EMAIL_LOGOUT)) { // 用户注销邮件
+                return "用户注销验证码";
             } else { // 用户存在时可以进行的操作均未执行则抛出异常
                 throw new ServiceException(Constants.CODE_600, "该邮箱已被绑定");
             }
@@ -411,6 +480,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             userDTO.setToken(String.valueOf(userFromRedis.get("token")));
         } else {
             userFromRedis.set("token", userDTO.getToken());
+        }
+        if (StrUtil.isBlank(userDTO.getUserFace())) { // 取userFace信息
+            userDTO.setUserFace(String.valueOf(userFromRedis.get("userFace")));
+        } else {
+            userFromRedis.set("userFace", userDTO.getUserFace());
         }
     }
 
