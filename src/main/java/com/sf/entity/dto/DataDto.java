@@ -5,22 +5,21 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @Description:
  * @author: leung
- * @date: 2022-06-07 15:58
+ * @date: 2022-06-08 16:03
  */
-public class FileDataDto {
+public class DataDto {
 
-    @ApiModelProperty("文件类型")
-    private String type;
-
+    @ApiModelProperty("数据名称")
+    private String name;
     @ApiModelProperty("数量")
     private Integer count;
 
-    public String getType() {
-        return type;
+    public String getName() {
+        return name;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public Integer getCount() {
@@ -30,4 +29,5 @@ public class FileDataDto {
     public void setCount(Integer count) {
         this.count = count;
     }
+
 }

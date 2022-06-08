@@ -1,57 +1,59 @@
 package com.sf.entity.dto;
 
+import io.swagger.annotations.ApiModelProperty;
+
 /**
  * @Description:
  * @author: leung
  * @date: 2022-06-07 22:49
  */
 public class SysDto {
-    //主机型号
+    @ApiModelProperty("主机型号")
     private String manufacturer;
 
-    //系统版本信息
+    @ApiModelProperty("系统版本信息")
     private String sysInfo;
 
-    //cpu核心数
+    @ApiModelProperty("cpu核心数")
     private String cpuCoreCount;
 
-    //cpu利用率
+    @ApiModelProperty("cpu利用率")
     private String cpuUsedRatio;
 
-    //cpu系统利用率
+    @ApiModelProperty("cpu系统利用率")
     private String cpuSysUsedRatio;
 
-    //cpu用户利用率
+    @ApiModelProperty("cpu用户利用率")
     private String cpuUserUsedRatio;
 
-    //cpu当前空闲率
+    @ApiModelProperty("cpu当前空闲率")
     private String cpuFreeRatio;
 
-    //cpu当前空闲率
+    @ApiModelProperty("cpu当前空闲率")
     private String cpuWaitRatio;
 
-    //cpu型号
+    @ApiModelProperty("cpu型号")
     private String cpuModel;
 
-    //总运行内存
+    @ApiModelProperty("总运行内存")
     private String memoryTotal;
 
-    //可用运行内存
+    @ApiModelProperty("可用运行内存")
     private String memoryAvailable;
 
-    //已使用运行内存
+    @ApiModelProperty("已使用运行内存")
     private String memoryUsed;
 
-    //磁盘总大小
+    @ApiModelProperty("磁盘总大小")
     private String diskTotal;
 
-    //磁盘剩余大小
+    @ApiModelProperty("磁盘剩余大小")
     private String diskFree;
 
-    //磁盘已用大小
+    @ApiModelProperty("磁盘已用大小")
     private String diskUsed;
 
-    //磁盘使用率
+    @ApiModelProperty("磁盘使用率")
     private String diskUsedRatio;
 
 

@@ -2,18 +2,16 @@ package com.sf.controller;
 
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.actuator.SysData;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
-import com.sf.entity.Files;
-import com.sf.entity.Report;
+import com.sf.entity.User;
 import com.sf.entity.dto.FileDataDto;
 import com.sf.entity.dto.InterfaceDto;
 import com.sf.entity.dto.SysDto;
+import com.sf.entity.dto.DataDto;
 import com.sf.mapper.FilesMapper;
-import com.sf.service.impl.ActiveUserServiceImpl;
+import com.sf.mapper.UserMapper;
 import com.sf.utils.RedisUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -21,7 +19,10 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -41,7 +42,7 @@ public class DataController {
     private static final Logger log = LoggerFactory.getLogger(DataController.class);
 
     @Resource
-    private ActiveUserServiceImpl activeUserService;
+    private UserMapper userMapper;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -116,11 +117,45 @@ public class DataController {
 
     @GetMapping("/sysInfo")
     @ApiOperation(value = "获得系统重要信息")
-    public Result<SysDto> findSysInfo(){
+    public Result<SysDto> findSysInfo() {
         SysDto sysInfo = SysData.getSysInfo();
         return Result.success(sysInfo);
     }
 
+    @GetMapping("/userCount")
+    @ApiOperation(value = "获得系统用户数与活跃用户")
+    public Result<List<DataDto>> findUserCount() {
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        Long aLong = userMapper.selectCount(queryWrapper);
+        //结果数组
+        List<DataDto> resultList = new ArrayList<>();
 
+        DataDto allUserCount = new DataDto();
 
+        allUserCount.setName("userCount");
+        allUserCount.setCount(Math.toIntExact(aLong));
+
+        //获得redis所有的key
+        Set<String> keys = stringRedisTemplate.keys("*");
+
+        DataDto onlineUser = new DataDto();
+        onlineUser.setName("activeUser");
+        if (keys != null && keys.size() != 0) {
+            int count = 0;
+            for (String key : keys) {
+                String[] split = key.split("\\.");
+                if (split.length == 3) {
+                    count++;
+                }
+            }
+            onlineUser.setCount(count);
+        } else {
+            onlineUser.setCount(0);
+        }
+
+        //加入系统用户数
+        resultList.add(allUserCount);
+        resultList.add(onlineUser);
+        return Result.success(resultList);
+    }
 }
