@@ -2,4 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.sf.mapper.FilesMapper">
 
+    <select id="selectFileCount" resultType="com.sf.entity.dto.FileDataDto">
+        SELECT count(*) as `count`,file.type
+        from tb_files as file
+        GROUP BY file.type
+        order by `count` desc
+        <if test="count!=null and count!=''">
+            limit  #{count}
+        </if>
+
+
+    </select>
 </mapper>
