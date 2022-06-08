@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Constants;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
+import com.sf.config.AuthAccess;
 import com.sf.entity.dto.ArticleDTO;
 import com.sf.entity.dto.UserDTO;
 import com.sf.exception.ServiceException;
@@ -73,6 +74,7 @@ public class ArticleController {
         return Result.success();
     }
 
+    @AuthAccess
     @GetMapping("/{id}")
     @ApiOperation(value = "根据文章id获取文章详细信息(包含文章内容，作者和标签信息)", notes = "用户已登录,请求路径包含文章id", httpMethod = "GET")
     public Result<JSONObject> findOne(@PathVariable Integer id) {
@@ -91,6 +93,7 @@ public class ArticleController {
         return Result.success(articleService.pageArticle(new Page<>(page, limit), id, type));
     }
 
+    @AuthAccess
     @GetMapping("/author/{id}/{type}/{page}/{limit}")
     @ApiOperation(value = "指定作者id获取文章列表(不包含文章内容，包含作者和标签信息)", notes = "用户已登录,请求路径包含文章作者id,type(draft草稿/publish已发布/all所有),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> getAuthorArticle(@PathVariable Integer id, @PathVariable String type, @PathVariable Integer page, @PathVariable Integer limit) {
@@ -103,6 +106,7 @@ public class ArticleController {
         return Result.success(articleService.pageArticle(new Page<>(page, limit), null, type));
     }
 
+    @AuthAccess
     @GetMapping("/search/{page}/{limit}")
     @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
     public Result<IPage<ArticleDTO>> pageSearchArticle(@RequestBody ArticleDTO articleDTO, @PathVariable Integer page, @PathVariable Integer limit) {

@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.sf.common.Result;
+import com.sf.config.AuthAccess;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,7 @@ public class TagsController {
         return Result.success(tagsService.page(new Page<>(pageNum, pageSize)));
     }
 
+    @AuthAccess
     @GetMapping("/top100")
     @ApiOperation(value = "返回标签热度前100个", notes = "须验证用户token(保存在headers中)", httpMethod = "GET")
     public Result<List<JSONObject>> getTop100() {
