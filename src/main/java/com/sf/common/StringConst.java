@@ -152,4 +152,19 @@ public interface StringConst {
     String ARTICLE_PUBLISH = "publish";
 
     /*---ArticleServiceImpl相关操作结束---*/
+    /**
+     * 邮件内容模板
+     */
+    String EMAIL_CONTENT = "<div class='main' style='padding-bottom:60px;background-color:#F1F1F1;'>" +
+            "        <div class='header' style='padding: 50px 60px'>" +
+            "             <h1 style='color:#fb5151;'>畅·言</h1>" +
+            "     <h2 style='color:#fb5151;'>Speak·Freely</h2>" +
+            "        </div>" +
+            "        " +
+            "        <div class='content' style='overflow: hidden;padding:30px 10% 70px 10%;margin:0 10%;background-color: #fff;box-shadow:0 4px 20px rgba(0,0,0,0.1);word-break: break-all;'>" +
+            "         <h2 style='margin: 30px 0;'> 您好！</h2>" +
+            "          <p style='margin-bottom: 40px;'>请使用下面的验证码验证您的操作，验证码 2 分钟内有效:</p>" +
+            "          <span style='padding: 10px 20px; font-size: 24px;background-color: #EB6F5A;border-radius:4px;color:#fff;'>CODE</span>" +
+            "        </div>" +
+            "      </div>";
 }
