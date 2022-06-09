@@ -1,6 +1,5 @@
 package com.sf.controller;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,12 +9,10 @@ import com.sf.common.Result;
 import com.sf.common.StringConst;
 import com.sf.config.AuthAccess;
 import com.sf.entity.dto.ArticleDTO;
-import com.sf.entity.dto.UserDTO;
 import com.sf.exception.ServiceException;
 import com.sf.mapper.ArticleMapper;
 import com.sf.mapper.TagsArticleMapper;
 import com.sf.mapper.TagsMapper;
-import com.sf.mapper.UserMapper;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import io.swagger.annotations.Api;
@@ -25,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 
@@ -109,9 +105,9 @@ public class ArticleController {
     @AuthAccess
     @GetMapping("/search/{page}/{limit}")
     @ApiOperation(value = "根据标签id和文章标题(至少一个不为空)分页搜索文章列表(不包含文章内容)", notes = "用户已登录,请求体中(searchTagID(标签ID),searchArticleTitle(文章标题)),page(页数),limit(每页限制)", httpMethod = "GET")
-    public Result<IPage<ArticleDTO>> pageSearchArticle(@PathVariable Integer page, @PathVariable Integer limit,ArticleDTO articleDTO) {
-        if (articleDTO.getSearchTagID()!=null || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
-            return Result.success(articleService.pageSearchArticle(new Page<>(page, limit), articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
+    public Result<IPage<ArticleDTO>> pageSearchArticle(@PathVariable Integer page, @PathVariable Integer limit, ArticleDTO articleDTO) {
+        if (articleDTO.getSearchTagID() != null || StrUtil.isNotBlank(articleDTO.getSearchArticleTitle())) {
+            return Result.success(articleMapper.pageArticle(new Page<>(page, limit), null, 1, articleDTO.getSearchTagID(), articleDTO.getSearchArticleTitle()));
         } else {
             throw new ServiceException(Constants.CODE_400, "标签ID和文章标题不能全为空!");
         }
@@ -133,6 +129,7 @@ public class ArticleController {
             throw new ServiceException(Constants.CODE_400, "参数异常!");
         }
     }
+
     @AuthAccess
     @PostMapping("/addCounts/{articleID}")
     @ApiOperation(value = "增加访问量", notes = "文章id", httpMethod = "POST")
@@ -142,9 +139,9 @@ public class ArticleController {
     }
 
     @AuthAccess
-    @GetMapping("/top5")
-    @ApiOperation(value = "返回文章热度前5个(半小时更新一次)", notes = "", httpMethod = "GET")
-    public Result<List<JSONObject>> getTop5() {
-        return Result.success(articleService.getTop5());
+    @GetMapping("/top/{page}/{limit}")
+    @ApiOperation(value = "返回文章热度排序结果列表", notes = "page(页数),limit(每页限制)", httpMethod = "GET")
+    public Result<Page<ArticleDTO>> pageTopArticle(@PathVariable Integer page, @PathVariable Integer limit) {
+        return Result.success(articleMapper.pageTopArticle(new Page<>(page, limit)));
     }
 }

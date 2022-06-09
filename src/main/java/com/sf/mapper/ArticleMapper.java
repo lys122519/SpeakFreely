@@ -34,24 +34,13 @@ public interface ArticleMapper extends BaseMapper<Article> {
     ArticleDTO getArticleByID(@Param("articleID") Integer articleID);
 
     /**
-     * 分页文章列表(包含作者和标签信息),未被删除,作者id(可选，null为所有用户),已发布(可选参数enabled,null为所有)
+     * 分页文章列表(包含作者和标签信息),未被删除,作者id(可选，null为所有用户),已发布(可选参数enabled,null为所有),标签ID(可选参数tagID，null为所有),文章标题(可选参数articleTitle，null为所有)
      */
-    // 1.有标签的文章
-    List<ArticleDTO> pageArticle(@Param("authorID") Integer authorID, @Param("enabled") Integer enabled,@Param("articleTitle") String title);
+    Page<ArticleDTO> pageArticle(Page<ArticleDTO> page, @Param("authorID") Integer authorID, @Param("enabled") Integer enabled, @Param("tagID") Integer tagID, @Param("articleTitle") String title);
 
-    // 2.无标签的文章
-    List<ArticleDTO> pageArticleNullTag(@Param("authorID") Integer authorID, @Param("enabled") Integer enabled,@Param("articleTitle") String title);
 
     /**
-     * 根据标签id和文章标题(至少一个不为空)分页搜索文章列表(包含作者和标签信息),未被删除,且已发布
+     * 分页获取文章热度排序结果
      */
-    // 1.有标签的文章
-    List<ArticleDTO> pageSearchArticleByTag(@Param("tagID") Integer tagID, @Param("articleTitle") String articleTitle);
-
-    // 2.无标签的文章
-    List<ArticleDTO> pageSearchArticleNullTag(@Param("articleTitle") String articleTitle);
-    // 1.有标签的文章
-    List<ArticleDTO> getArticleTopByTag();
-    // 2.无标签的文章
-    List<ArticleDTO> getArticleTopNullTag();
+    Page<ArticleDTO> pageTopArticle(Page<ArticleDTO> page);
 }

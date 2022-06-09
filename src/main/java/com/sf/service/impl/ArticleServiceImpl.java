@@ -67,104 +67,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * 分页根据作者ID获取文章列表
      *
      * @param articlePage
-     * @param id
+     * @param authorID
      * @param type
      * @param title
      * @return
      */
     @Override
-    public Page<ArticleDTO> pageArticle(Page<ArticleDTO> articlePage, Integer id, String type, String title) {
-        switch (type) { // 三种类型均存在空标签文章情况，需对两种查询结果合并再分页
+    public Page<ArticleDTO> pageArticle(Page<ArticleDTO> articlePage, Integer authorID, String type, String title) {
+        switch (type) {
             case "draft":// 草稿
-                List<ArticleDTO> recordsNull = articleMapper.pageArticleNullTag(id, 0, title);
-                List<ArticleDTO> records = articleMapper.pageArticle(id, 0, title);
-                records.addAll(recordsNull);
-                return pageArticleList(articlePage, records);
+                return articleMapper.pageArticle(articlePage, authorID, 0, null, title);
             case "publish":// 已发布
-                recordsNull = articleMapper.pageArticleNullTag(id, 1, title);
-                records = articleMapper.pageArticle(id, 1, title);
-                records.addAll(recordsNull);
-                return pageArticleList(articlePage, records);
+                return articleMapper.pageArticle(articlePage, authorID, 1, null, title);
             case "all":// 所有
-                recordsNull = articleMapper.pageArticleNullTag(id, null, title);
-                records = articleMapper.pageArticle(id, null, title);
-                records.addAll(recordsNull);
-                return pageArticleList(articlePage, records);
+                return articleMapper.pageArticle(articlePage, authorID, null, null, title);
             default:
                 throw new ServiceException(Constants.CODE_400, "未知操作!");
         }
     }
 
-    /**
-     * 分页根据标签id和文章标题(至少一个不为空)搜索文章列表
-     *
-     * @param articlePage
-     * @param id
-     * @param title
-     * @return
-     */
-    @Override
-    public Page<ArticleDTO> pageSearchArticle(Page<ArticleDTO> articlePage, Integer id, String title) {
-        if (id != null) { // 标签id不为空，则无论标题是否为空都是根据标签id获取文章
-            List<ArticleDTO> records = articleMapper.pageSearchArticleByTag(id, title);
-            return pageArticleList(articlePage, records);// 调用文章列表分页方法分页并返回
-        } else if (StrUtil.isNotBlank(title)) { // 标签为空，标题必不能为空
-            // 先获取空标签文章，再获取文章标签关系列表中的文章进行合并
-            List<ArticleDTO> recordsNull = articleMapper.pageSearchArticleNullTag(title);
-            List<ArticleDTO> records = articleMapper.pageSearchArticleByTag(id, title);
-            records.addAll(recordsNull);
-            return pageArticleList(articlePage, records);// 调用文章列表分页方法分页并返回
-        } else {
-            throw new ServiceException(Constants.CODE_400, "未知操作!");
-        }
-    }
-
-    @Override
-    public List<JSONObject> getTop5() {// 获取文章按照counts排序前5个
-        // 先查询redis标签缓存
-        Map<Object, Object> articleTop5 = RedisUtils.mapFromRedis(StringConst.ARTICLE_REDIS_KEY);
-        if (articleTop5.size() == 0) { // 判断缓存是否为空
-            List<ArticleDTO> articleList = articleMapper.getArticleTopByTag(); // 查询带标签文章前5个结果
-            List<ArticleDTO> articleNullTag = articleMapper.getArticleTopNullTag(); // 查询无标签文章前5个结果
-            articleList.addAll(articleNullTag);
-            articleList.sort((o1, o2) -> {
-                if (o1.getCounts() < o2.getCounts()) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            });
-            if (articleList.size() > 5) {
-                // 超过5个文章则进行切片
-                articleList = articleList.subList(0, 5);
-            }
-            for (ArticleDTO article : articleList) {
-                // 将标签对象(先变成json对象再转为字符串)压入文章topMap
-                articleTop5.put(article.getId().toString(), new JSONObject(article).toString());
-            }
-            //将articleTop5放入redis(并设置过期时长)
-            RedisUtils.mapToRedis(StringConst.ARTICLE_REDIS_KEY, articleTop5, Constants.ARTICLE_REDIS_TIMEOUT);
-        } else {
-            // redis已存在文章map缓存信息
-            // 将map还原为list进行排序
-            List<JSONObject> articleList = RedisUtils.jsonListFromMap(articleTop5);
-            articleTop5.clear();//清空map，重新排序
-            //按counts排序
-            articleList.sort((o1, o2) -> {
-                if (Integer.parseInt(String.valueOf(o1.get("counts"))) < Integer.parseInt(String.valueOf(o2.get("counts")))) {
-                    return 1;
-                } else {
-                    return -1;
-                }
-            });
-            // 将排序结果压入map
-            for (JSONObject article : articleList) {
-                // 将标签对象(先变成json对象再转为字符串)压入文章topMap
-                articleTop5.put(article.get("id").toString(), new JSONObject(article).toString());
-            }
-        }
-        return RedisUtils.jsonListFromMap(articleTop5);
-    }
 
     /**
      * 对查询到的文章列表进行分页
@@ -337,6 +258,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     /**
      * 批量查询文章已有标签方法
+     *
      * @param articleID
      * @return
      */
