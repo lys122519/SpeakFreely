@@ -186,10 +186,11 @@ public class UserController {
 
     @ApiOperation(value = "人脸录入", notes = "必须参数：token(headers中);userFace(BASE64)", httpMethod = "POST")
     @PostMapping("/faceUpload")
-    public Result<JSONObject> faceUpload(@RequestBody UserDTO userDTO) {
+    public Result<Void> faceUpload(@RequestBody UserDTO userDTO) {
         userDTO.setToken(TokenUtils.getToken());
         if (StrUtil.isNotBlank(userDTO.getToken()) && StrUtil.isNotBlank(userDTO.getUserFace())) {
-            return Result.success(userService.faceUpload(userDTO));
+            userService.faceUpload(userDTO);
+            return Result.success();
         } else {
             throw new ServiceException(Constants.CODE_400, "参数异常!");
         }

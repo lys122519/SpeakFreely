@@ -402,13 +402,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
     }
 
     @Override
-    public JSONObject faceUpload(UserDTO userDTO) { // 人脸录入
+    public void faceUpload(UserDTO userDTO) { // 人脸录入
         Integer user_id = RedisUtils.getCurrentUserId(userDTO.getToken());// 获取当前用户ID
         // 请求url
         String url = "https://aip.baidubce.com/rest/2.0/face/v3/faceset/user/update";
         // 构建人脸上传请求体json格式数据
         JSONObject jsonUpload = new JSONObject();
         jsonUpload.set("image", userDTO.getUserFace());
+        jsonUpload.set("liveness_control", "NORMAL");
         jsonUpload.set("group_id", "speakfreely");
         jsonUpload.set("user_id", user_id);
         jsonUpload.set("image_type", "BASE64");
@@ -438,8 +439,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             setUserRedis(userDTO, userFromRedis); // 用户redis缓存同步
             //将用户缓存存入redis
             RedisUtils.objToRedis(userDTO.getToken(), userFromRedis, Constants.USER_REDIS_TIMEOUT);
-        }  // 上传失败直接将失败结果返回
-        return jsonResult;
+        } else {// 上传失败
+            throw new ServiceException(Constants.CODE_600, "人脸上传失败，请重试");
+        }
     }
 
     /**
