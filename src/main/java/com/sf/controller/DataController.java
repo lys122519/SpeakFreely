@@ -1,15 +1,17 @@
 package com.sf.controller;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sf.actuator.SysData;
 import com.sf.common.Result;
 import com.sf.common.StringConst;
+import com.sf.entity.Article;
+import com.sf.entity.Comment;
 import com.sf.entity.User;
-import com.sf.entity.dto.FileDataDto;
-import com.sf.entity.dto.InterfaceDto;
-import com.sf.entity.dto.SysDto;
-import com.sf.entity.dto.DataDto;
+import com.sf.entity.dto.*;
+import com.sf.mapper.ArticleMapper;
+import com.sf.mapper.CommentMapper;
 import com.sf.mapper.FilesMapper;
 import com.sf.mapper.UserMapper;
 import com.sf.utils.RedisUtils;
@@ -18,6 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -43,6 +46,13 @@ public class DataController {
 
     @Resource
     private UserMapper userMapper;
+
+    @Resource
+    private ArticleMapper articleMapper;
+
+    @Resource
+    private CommentMapper commentMapper;
+
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -158,4 +168,42 @@ public class DataController {
         resultList.add(onlineUser);
         return Result.success(resultList);
     }
+
+
+    @GetMapping("/sexCount")
+    @ApiOperation(value = "用户性别统计")
+    public Result<List<UserDataDto>> findUserSexCount() {
+
+        List<UserDataDto> resultList = userMapper.selectUserSexCount();
+
+        return Result.success(resultList);
+    }
+
+    @GetMapping("/articleAndCommentCount")
+    @ApiOperation(value = "文章和评论数量统计")
+    public Result<List<DataDto>> findArticleCount() {
+        QueryWrapper<Article> queryWrapper  =new QueryWrapper<>();
+
+        Long articleCount = articleMapper.selectCount(queryWrapper);
+
+
+        List<DataDto> resultList = new ArrayList<>();
+
+        DataDto articleDto = new DataDto();
+        articleDto.setName("article");
+        articleDto.setCount(Math.toIntExact(articleCount));
+        resultList.add(articleDto);
+
+
+        QueryWrapper<Comment> commentQueryWrapper =new QueryWrapper<>();
+        Long commentCount = commentMapper.selectCount(commentQueryWrapper);
+
+        DataDto commentDto = new DataDto();
+        commentDto.setName("comment");
+        commentDto.setCount(Math.toIntExact(commentCount));
+        resultList.add(commentDto);
+
+        return Result.success(resultList);
+    }
+
 }

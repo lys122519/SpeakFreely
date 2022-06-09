@@ -1,26 +1,27 @@
 package com.sf.entity.dto;
 
+import com.sf.enums.SexEnum;
 import io.swagger.annotations.ApiModelProperty;
 
 /**
  * @Description:
  * @author: leung
- * @date: 2022-06-08 16:03
+ * @date: 2022-06-08 23:08
  */
-public class DataDto {
+public class UserDataDto {
 
-    @ApiModelProperty("数据名称")
-    private String name;
+    @ApiModelProperty("性别")
+    private SexEnum sex;
 
     @ApiModelProperty("数量")
     private Integer count;
 
-    public String getName() {
-        return name;
+    public SexEnum getSex() {
+        return sex;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setSex(SexEnum sex) {
+        this.sex = sex;
     }
 
     public Integer getCount() {
@@ -30,5 +31,4 @@ public class DataDto {
     public void setCount(Integer count) {
         this.count = count;
     }
-
 }

@@ -30,6 +30,9 @@ public class CommentDto {
     @ApiModelProperty(value = "所属文章id", required = true)
     private Integer articleId;
 
+    @ApiModelProperty(value = "所属文章id")
+    private String articleName;
+
     @ApiModelProperty("是否删除")
     @TableLogic
     private Boolean deleted;
@@ -45,6 +48,15 @@ public class CommentDto {
 
     @ApiModelProperty("用户头像")
     private String avatarUrl;
+
+
+    public String getArticleName() {
+        return articleName;
+    }
+
+    public void setArticleName(String articleName) {
+        this.articleName = articleName;
+    }
 
     public Integer getId() {
         return id;

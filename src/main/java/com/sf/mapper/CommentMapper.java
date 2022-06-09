@@ -35,7 +35,7 @@ public interface CommentMapper extends BaseMapper<Comment> {
      * @param currentUserId
      * @return
      */
-    List<Comment> selectUserComment(@Param("currentUserId") Integer currentUserId);
+    List<CommentDto> selectUserComment(@Param("currentUserId") Integer currentUserId);
 
     /**
      * 分页查找

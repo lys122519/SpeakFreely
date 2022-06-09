@@ -14,6 +14,7 @@ import com.sf.mapper.UserMapper;
 import com.sf.service.ICommentService;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -45,10 +46,6 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
     private CommentMapper commentMapper;
 
     @Resource
-    private StringRedisTemplate stringRedisTemplate;
-
-
-    @Resource
     private UserMapper userMapper;
 
     /**
@@ -61,7 +58,6 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
 
         commentDto.setUserId(RedisUtils.getCurrentUserId(TokenUtils.getToken()));
         commentDto.setTime(DateUtil.now());
-
 
         if (commentDto.getPid() != null) {
             //如果是回复，才处理
@@ -174,19 +170,20 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      * @return
      */
     @Override
-    public Page<Comment> findUserComment(Page<Comment> page) {
+    public Page<CommentDto> findUserComment(Page<CommentDto> page) {
         Integer currentUserId = RedisUtils.getCurrentUserId(TokenUtils.getToken());
 
         //当前用户的所有评论
-        List<Comment> comments = commentMapper.selectUserComment(currentUserId);
+        List<CommentDto> comments = commentMapper.selectUserComment(currentUserId);
 
         //当前用户父级不为空的评论
-        List<Comment> originList = comments.stream().filter(comment -> (comment.getOriginId() != null
+        List<CommentDto> originList = comments.stream().filter(comment -> (comment.getOriginId() != null
                 && comment.getPid() != null)).collect(Collectors.toList());
 
-        for (Comment comment : originList) {
+        for (CommentDto comment : originList) {
             Integer pid = comment.getPid();
             if (pid != null) {
+
                 //查找到父级评论
                 Comment pComment = commentMapper.selectById(pid);
                 Integer userId = pComment.getUserId();
@@ -197,9 +194,8 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
                 comment.setpUserId(userId);
             }
         }
-        Page<Comment> commentPage = pageCommentList(page, comments);
 
-        return commentPage;
+        return pageCommentDtoList(page, comments);
 
     }
 
@@ -208,7 +204,7 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
      *
      * @param pageNum
      * @param pageSize
-     * @param comment
+     * @param commentDto
      * @return
      */
     @Override
@@ -218,6 +214,30 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment> impl
         return page;
 
     }
+
+    /**
+     * 对查询到的列表进行分页
+     *
+     * @param page
+     * @param records
+     * @return
+     */
+    public Page<CommentDto> pageCommentDtoList(Page<CommentDto> page, List<CommentDto> records) {
+        // 根据总数设置分页数据总数
+        page.setTotal(records.size());
+        // 根据总数设置分页页码总数
+        page.setPages((records.size() + page.getSize() - 1) / page.getSize());
+        // 计算偏移量和切片位置下标(以获取指定页码的文章)
+        int offset = Math.toIntExact((page.getCurrent() - 1) * page.getSize());
+        int end = Math.toIntExact(page.getCurrent() * page.getSize());
+        if (end > records.size()) {
+            // 如果当前切片结束位置超出数据总数，将其置为总数
+            end = records.size();
+        }
+        // 将切片后的列表放入分页记录列表
+        return page.setRecords(records.subList(offset, end));
+    }
+
 
     /**
      * 对查询到的列表进行分页

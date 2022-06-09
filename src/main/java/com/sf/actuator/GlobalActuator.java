@@ -69,8 +69,9 @@ public class GlobalActuator {
 
         Signature signature = joinPoint.getSignature();
         String declaringName = signature.getDeclaringTypeName();
+        String[] splitResult = declaringName.split("\\.");
         String methodName = signature.getName();
-        String mapKey = declaringName + methodName;
+        String mapKey = splitResult[splitResult.length - 1] + methodName;
 
         // 执行成功则计数加一
         int increase = AtomicCounter.getInstance().increase();
@@ -117,7 +118,6 @@ public class GlobalActuator {
     @AfterThrowing(pointcut = "com.sf.actuator.GlobalActuator.servicePt()")
     public void doAfterThrowing(JoinPoint joinPoint) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-
         log.info("接口访问失败，URI:[{}], 耗费时间:[{}] ms", request.getRequestURI(), System.currentTimeMillis() - startTime.get());
     }
 

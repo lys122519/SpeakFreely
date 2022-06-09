@@ -63,7 +63,7 @@ public class CommentController {
 
     @GetMapping("/findUserComment")
     @ApiOperation(value = "查找用户id所有评论", notes = "id不用传")
-    public Result<Page<Comment>> findUserCommentById(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
+    public Result<Page<CommentDto>> findUserCommentById(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
                                                      @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize
     ) {
         return Result.success(commentService.findUserComment(new Page<>(pageNum, pageSize)));
@@ -84,8 +84,8 @@ public class CommentController {
     @GetMapping("/page")
     @ApiOperation(value = "后台分页查找", notes = "支持按内容和用户id查找")
     public Result<IPage<CommentDto>> findPage(@ApiParam(name = "pageNum", value = "当前页码", required = true) @RequestParam Integer pageNum,
-                                           @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
-                                           @ApiParam(name = "comment", value = "Comment对象") CommentDto commentDto
+                                              @ApiParam(name = "pageSize", value = "页面大小", required = true) @RequestParam Integer pageSize,
+                                              @ApiParam(name = "comment", value = "Comment对象") CommentDto commentDto
     ) {
         IPage<CommentDto> page = commentService.getPage(pageNum, pageSize, commentDto);
         if (pageNum > page.getPages()) {
