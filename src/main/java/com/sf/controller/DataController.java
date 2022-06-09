@@ -1,6 +1,5 @@
 package com.sf.controller;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.sf.actuator.SysData;
@@ -20,7 +19,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -97,7 +95,7 @@ public class DataController {
     }
 
     @GetMapping("/activeUserCountByHour")
-    @ApiOperation(value = "查询系统活跃用户数(24小时内)", notes = ",整点统计")
+    @ApiOperation(value = "查询系统活跃用户数(24小时内)", notes = "整点统计")
     public Result<ArrayList<Integer>> findActiveUserCount() {
 
         ArrayList<Integer> activeList = new ArrayList<>();
@@ -182,10 +180,9 @@ public class DataController {
     @GetMapping("/articleAndCommentCount")
     @ApiOperation(value = "文章和评论数量统计")
     public Result<List<DataDto>> findArticleCount() {
-        QueryWrapper<Article> queryWrapper  =new QueryWrapper<>();
+        QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
 
         Long articleCount = articleMapper.selectCount(queryWrapper);
-
 
         List<DataDto> resultList = new ArrayList<>();
 
@@ -194,8 +191,7 @@ public class DataController {
         articleDto.setCount(Math.toIntExact(articleCount));
         resultList.add(articleDto);
 
-
-        QueryWrapper<Comment> commentQueryWrapper =new QueryWrapper<>();
+        QueryWrapper<Comment> commentQueryWrapper = new QueryWrapper<>();
         Long commentCount = commentMapper.selectCount(commentQueryWrapper);
 
         DataDto commentDto = new DataDto();

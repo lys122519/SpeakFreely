@@ -11,6 +11,7 @@ import com.sf.service.IReportService;
 import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
@@ -22,6 +23,7 @@ import javax.annotation.Resource;
  * @author leung
  * @since 2022-06-04
  */
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class ReportServiceImpl extends ServiceImpl<ReportMapper, Report> implements IReportService {
 

@@ -30,7 +30,7 @@ public class SwaggerConfig {
         Docket docket = new Docket(DocumentationType.SWAGGER_2)
                 .apiInfo(apiInfo())
                 //分组名称
-                .groupName("2.X版本")
+                .groupName("1.0版本")
                 .select()
                 //这里指定Controller扫描包路径
                 .apis(RequestHandlerSelectors.basePackage("com.sf.controller"))
@@ -46,8 +46,8 @@ public class SwaggerConfig {
 
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("SpeakFreely的RESTful APIs")
-                .description("构建RESTful APIs")
+                .title("SpeakFreely接口文档")
+                .description("项目接口文档")
                 .termsOfServiceUrl("")
                 .contact(new Contact("SpeakFreely",
                         "",

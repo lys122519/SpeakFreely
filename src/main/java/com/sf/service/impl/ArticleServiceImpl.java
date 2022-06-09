@@ -57,29 +57,37 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     }
 
     @Override
-    public void addCounts(Integer articleID){ // 访问量+1
+    public void addCounts(Integer articleID) { // 访问量+1
         Article article = articleMapper.selectById(articleID);
-        article.setCounts(article.getCounts()+1); // 访问数+1
+        article.setCounts(article.getCounts() + 1); // 访问数+1
         articleMapper.updateById(article); // 向数据库更新文章信息
     }
 
+    /**
+     * 分页根据作者ID获取文章列表
+     *
+     * @param articlePage
+     * @param id
+     * @param type
+     * @param title
+     * @return
+     */
     @Override
-    // 分页根据作者ID获取文章列表
     public Page<ArticleDTO> pageArticle(Page<ArticleDTO> articlePage, Integer id, String type, String title) {
         switch (type) { // 三种类型均存在空标签文章情况，需对两种查询结果合并再分页
             case "draft":// 草稿
-                List<ArticleDTO> recordsNull = articleMapper.pageArticleNullTag(id, 0,title);
-                List<ArticleDTO> records = articleMapper.pageArticle(id, 0,title);
+                List<ArticleDTO> recordsNull = articleMapper.pageArticleNullTag(id, 0, title);
+                List<ArticleDTO> records = articleMapper.pageArticle(id, 0, title);
                 records.addAll(recordsNull);
                 return pageArticleList(articlePage, records);
             case "publish":// 已发布
-                recordsNull = articleMapper.pageArticleNullTag(id, 1,title);
-                records = articleMapper.pageArticle(id, 1,title);
+                recordsNull = articleMapper.pageArticleNullTag(id, 1, title);
+                records = articleMapper.pageArticle(id, 1, title);
                 records.addAll(recordsNull);
                 return pageArticleList(articlePage, records);
             case "all":// 所有
-                recordsNull = articleMapper.pageArticleNullTag(id, null,title);
-                records = articleMapper.pageArticle(id, null,title);
+                recordsNull = articleMapper.pageArticleNullTag(id, null, title);
+                records = articleMapper.pageArticle(id, null, title);
                 records.addAll(recordsNull);
                 return pageArticleList(articlePage, records);
             default:
@@ -87,8 +95,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
     }
 
+    /**
+     * 分页根据标签id和文章标题(至少一个不为空)搜索文章列表
+     *
+     * @param articlePage
+     * @param id
+     * @param title
+     * @return
+     */
     @Override
-    // 分页根据标签id和文章标题(至少一个不为空)搜索文章列表
     public Page<ArticleDTO> pageSearchArticle(Page<ArticleDTO> articlePage, Integer id, String title) {
         if (id != null) { // 标签id不为空，则无论标题是否为空都是根据标签id获取文章
             List<ArticleDTO> records = articleMapper.pageSearchArticleByTag(id, title);
@@ -113,35 +128,51 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             List<ArticleDTO> articleNullTag = articleMapper.getArticleTopNullTag(); // 查询无标签文章前5个结果
             articleList.addAll(articleNullTag);
             articleList.sort((o1, o2) -> {
-                if (o1.getCounts() < o2.getCounts()) return 1;
-                else return -1;
+                if (o1.getCounts() < o2.getCounts()) {
+                    return 1;
+                } else {
+                    return -1;
+                }
             });
-            if (articleList.size() > 5) { // 超过5个文章则进行切片
+            if (articleList.size() > 5) {
+                // 超过5个文章则进行切片
                 articleList = articleList.subList(0, 5);
             }
-            for (ArticleDTO article : articleList) { // 将标签对象(先变成json对象再转为字符串)压入文章topMap
+            for (ArticleDTO article : articleList) {
+                // 将标签对象(先变成json对象再转为字符串)压入文章topMap
                 articleTop5.put(article.getId().toString(), new JSONObject(article).toString());
             }
             //将articleTop5放入redis(并设置过期时长)
             RedisUtils.mapToRedis(StringConst.ARTICLE_REDIS_KEY, articleTop5, Constants.ARTICLE_REDIS_TIMEOUT);
-        }else { // redis已存在文章map缓存信息
+        } else {
+            // redis已存在文章map缓存信息
             // 将map还原为list进行排序
             List<JSONObject> articleList = RedisUtils.jsonListFromMap(articleTop5);
             articleTop5.clear();//清空map，重新排序
             //按counts排序
             articleList.sort((o1, o2) -> {
-                if (Integer.parseInt(String.valueOf(o1.get("counts"))) < Integer.parseInt(String.valueOf(o2.get("counts")))) return 1;
-                else return -1;
+                if (Integer.parseInt(String.valueOf(o1.get("counts"))) < Integer.parseInt(String.valueOf(o2.get("counts")))) {
+                    return 1;
+                } else {
+                    return -1;
+                }
             });
             // 将排序结果压入map
-            for (JSONObject article : articleList) { // 将标签对象(先变成json对象再转为字符串)压入文章topMap
+            for (JSONObject article : articleList) {
+                // 将标签对象(先变成json对象再转为字符串)压入文章topMap
                 articleTop5.put(article.get("id").toString(), new JSONObject(article).toString());
             }
         }
         return RedisUtils.jsonListFromMap(articleTop5);
     }
 
-    // 对查询到的文章列表进行分页
+    /**
+     * 对查询到的文章列表进行分页
+     *
+     * @param articlePage
+     * @param records
+     * @return
+     */
     public Page<ArticleDTO> pageArticleList(Page<ArticleDTO> articlePage, List<ArticleDTO> records) {
         // 根据文章总数设置分页数据总数
         articlePage.setTotal(records.size());
@@ -150,7 +181,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 计算偏移量和切片位置下标(以获取指定页码的文章)
         int offset = Math.toIntExact((articlePage.getCurrent() - 1) * articlePage.getSize());
         int end = Math.toIntExact(articlePage.getCurrent() * articlePage.getSize());
-        if (end > records.size()) {// 如果当前切片结束位置超出数据总数，将其置为总数
+        if (end > records.size()) {
+            // 如果当前切片结束位置超出数据总数，将其置为总数
             end = records.size();
         }
         // 将切片后的文章列表放入分页记录列表
@@ -167,7 +199,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if (article.getId() == null) {
             setEnable(action, article); // 设置启用状态
             articleMapper.insert(article); // 向数据库插入新文章或新草稿信息
-        } else { // 2.有文章ID必然有用户ID：旧草稿发布/旧文章更新/旧草稿更新/旧文章存草稿
+        } else {
+            // 2.有文章ID必然有用户ID：旧草稿发布/旧文章更新/旧草稿更新/旧文章存草稿
             setEnable(action, article); // 设置启用状态
             articleMapper.updateById(article); // 向数据库更新文章或草稿信息
         }
@@ -178,17 +211,28 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return article;
     }
 
-    /*设置文章作者*/
+    /**
+     * 设置文章作者
+     *
+     * @return
+     */
     public JSONObject setAuthor() {
-        JSONObject author = new JSONObject(); //用于返回author
-        JSONObject user = RedisUtils.getUserRedis(TokenUtils.getToken()); // 查询redis用户信息
+        //用于返回author
+        JSONObject author = new JSONObject();
+        // 查询redis用户信息
+        JSONObject user = RedisUtils.getUserRedis(TokenUtils.getToken());
         author.set("id", Integer.valueOf(user.get("id").toString()));
         author.set("nickname", user.get("nickname"));
         author.set("avatarUrl", user.get("avatarUrl") == null ? null : user.get("avatarUrl"));
         return author;
     }
 
-    /*设置是否启用文章*/
+    /**
+     * 设置是否启用文章
+     *
+     * @param action
+     * @param article
+     */
     public void setEnable(String action, Article article) {
         if (action.equals(StringConst.ARTICLE_PUBLISH)) { // 操作为文章发布
             article.setEnabled(ArticleEnum.ENABLE);// 设置文章状态为启用
@@ -199,37 +243,49 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         }
     }
 
-    /*设置文章与标签的绑定关系*/
+    /**
+     * 设置文章与标签的绑定关系
+     *
+     * @param articleID
+     * @param tagsList
+     */
     public void bindTags(Integer articleID, List<Tags> tagsList) {
         List<Integer> nowList = new ArrayList<>(); // 存放当前文章应绑定标签id的列表
         List<Integer> oldList = new ArrayList<>(); // 存放当前文章旧标签id的列表
         if (tagsList.size() > 0) {
             tagsList = newTagDeal(tagsList); // 先处理用户自建标签(处理过程会对tagsList进行更新)
         }
-        for (Tags tag : tagsList) { // 根据处理后的tagsList构建nowList
+        for (Tags tag : tagsList) {
+            // 根据处理后的tagsList构建nowList
             nowList.add(tag.getId());
         }
-        for (TagsArticle tagsArticle : getOwnTag(articleID)) { // 根据查询结果构建oldList
+        for (TagsArticle tagsArticle : getOwnTag(articleID)) {
+            // 根据查询结果构建oldList
             oldList.add(tagsArticle.getTagId());
         }
-//      log.warn(nowList.toString());
-//      log.warn(oldList.toString());
         // 通过差集确定要删除的标签id列表和要新增的标签id列表
         List<Integer> deleteList = ObjectActionUtils.listComplement(oldList, nowList);
         List<Integer> addList = ObjectActionUtils.listComplement(nowList, oldList);
-//        log.warn(deleteList.toString());
-//        log.warn(addList.toString());
         if (deleteList.size() > 0) {
-            tagsArticleMapper.batchRemoveList(articleID, deleteList); // 批量删除标签关系
+            // 批量删除标签关系
+            tagsArticleMapper.batchRemoveList(articleID, deleteList);
         }
         if (addList.size() > 0) {
-            tagsArticleMapper.batchAddList(articleID, addList); // 批量添加标签关系
+            // 批量添加标签关系
+            tagsArticleMapper.batchAddList(articleID, addList);
         }
     }
 
-    /*处理用户自建标签*/
+
+    /**
+     * 处理用户自建标签
+     *
+     * @param tagsList
+     * @return
+     */
     public List<Tags> newTagDeal(List<Tags> tagsList) {
-        List<Tags> addTagsList = new ArrayList<>(); // 存放要批量添加的tag
+        // 存放要批量添加的tag
+        List<Tags> addTagsList = new ArrayList<>();
         for (int index = 0; index < tagsList.size(); index++) { // 第一次遍历对用户自建标签进行处理
             Tags tag = tagsList.get(index);
             Tags result = checkTag(tag); // 判断数据库是否存在同名标签
@@ -238,11 +294,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                     tag.setVersion(0L); // 新标签版本号默认为0
                     addTagsList.add(tag); // 不同名则将其放入待添加列表
                 } else {
-                    result.setCounts(result.getCounts() + 1); // 已被当前文章引用，热度+1
-                    tagsMapper.updateById(result); // 更新标签信息
-                    tagsList.set(index, result); // 否则进行替换
+                    // 已被当前文章引用，热度+1
+                    result.setCounts(result.getCounts() + 1);
+                    // 更新标签信息
+                    tagsMapper.updateById(result);
+                    // 否则进行替换
+                    tagsList.set(index, result);
                 }
-            } else { // ID不为空的直接替换并更新
+            } else {
+                // ID不为空的直接替换并更新
                 result.setCounts(result.getCounts() + 1); // 已被当前文章引用，热度+1
                 tagsMapper.updateById(result); // 更新标签信息
                 tagsList.set(index, result); // 否则进行替换
@@ -254,13 +314,20 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return tagsList;
     }
 
-    /*检查标签方法*/
+    /**
+     * 检查标签方法
+     *
+     * @param tag
+     * @return
+     */
     public Tags checkTag(Tags tag) {
         QueryWrapper<Tags> queryWrapper = new QueryWrapper<>();
         // 用户自建标签ID为空,且内容不为空可能是已有标签
         if (StrUtil.isNotBlank(tag.getContent())) {
-            queryWrapper.eq("content", tag.getContent()); // 根据文章内容查询并返回
-        } else if (StrUtil.isNotBlank(tag.getId().toString())) { // ID不为空必定为已有标签
+            // 根据文章内容查询并返回
+            queryWrapper.eq("content", tag.getContent());
+        } else if (StrUtil.isNotBlank(tag.getId().toString())) {
+            // ID不为空必定为已有标签
             queryWrapper.eq("id", tag.getId()); // 根据标签ID查询并返回
         } else { // ID和内容都为空为异常
             throw new ServiceException(Constants.CODE_400, "参数异常!");
@@ -268,10 +335,15 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return tagsMapper.selectOne(queryWrapper);
     }
 
-    /*批量查询文章已有标签方法*/
+    /**
+     * 批量查询文章已有标签方法
+     * @param articleID
+     * @return
+     */
     public List<TagsArticle> getOwnTag(Integer articleID) {
         QueryWrapper<TagsArticle> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("article_id", articleID); // 根据文章id查询其所有标签关系列表
+        // 根据文章id查询其所有标签关系列表
+        queryWrapper.eq("article_id", articleID);
         return tagsArticleMapper.selectList(queryWrapper);
     }
 
