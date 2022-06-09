@@ -87,7 +87,7 @@ public class UserController {
         return Result.success(userService.page(new Page<>(pageNum, pageSize)));
     }
 
-    @ApiOperation(value = "禁用账号", notes = "管理员操作(token对应用户role为USER_ADMIN),需要指定userID,对指定id的用户禁用其账号(禁用时如果用户信息在Redis中会进行删除,禁用后该用户无法登录)", httpMethod = "POST")
+    @ApiOperation(value = "禁用账号", notes = "管理员操作(token对应用户role为ROLE_ADMIN),需要指定userID,对指定id的用户禁用其账号(禁用时如果用户信息在Redis中会进行删除,禁用后该用户无法登录)", httpMethod = "POST")
     @PostMapping("/disabled/{userID}")
     public Result<Void> userDisabled(@PathVariable Integer userID) {
         if (!RedisUtils.getCurrentUserAttr(TokenUtils.getToken(), "role").equals(StringConst.USER_ADMIN)) {
@@ -101,7 +101,7 @@ public class UserController {
         }
     }
 
-    @ApiOperation(value = "解除禁用", notes = "管理员操作(token对应用户role为USER_ADMIN), 解除对指定id账号的禁用，需要指定userID", httpMethod = "POST")
+    @ApiOperation(value = "解除禁用", notes = "管理员操作(token对应用户role为ROLE_ADMIN), 解除对指定id账号的禁用，需要指定userID", httpMethod = "POST")
     @PostMapping("/enable/{userID}")
     public Result<Void> userEnable(@PathVariable Integer userID) {
         if (!RedisUtils.getCurrentUserAttr(TokenUtils.getToken(), "role").equals(StringConst.USER_ADMIN)) {

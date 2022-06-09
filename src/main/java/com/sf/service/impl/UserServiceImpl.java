@@ -177,9 +177,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             if (userIDTokenMap.containsKey(user.getId().toString())) { // 判断是否已登录
                 String token = (String) userIDTokenMap.get(user.getId().toString());
                 // 判断是否有该token对应的用户信息(防止用户信息两小时过期后关系表中还存在该关系)
-                if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))){
+                if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
                     throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
-                }else { // 不存在该token对应的用户信息则将该关系删除
+                } else { // 不存在该token对应的用户信息则将该关系删除
                     userIDTokenMap.remove(user.getId().toString());
                     stringRedisTemplate.delete(StringConst.USERID_TOKEN_REDIS_KEY);
                     RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
@@ -240,9 +240,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 if (userIDTokenMap.containsKey(user.getId().toString())) { // 判断是否已登录
                     String token = (String) userIDTokenMap.get(user.getId().toString());
                     // 判断是否有该token对应的用户信息(防止用户信息两小时过期后关系表中还存在该关系)
-                    if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))){
+                    if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
                         throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
-                    }else { // 不存在该token对应的用户信息则将该关系删除
+                    } else { // 不存在该token对应的用户信息则将该关系删除
                         userIDTokenMap.remove(user.getId().toString());
                         stringRedisTemplate.delete(StringConst.USERID_TOKEN_REDIS_KEY);
                         RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
@@ -450,14 +450,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         if ("".equals(codeFromRedis) || codeFromRedis == null) { // 检验redis有没有对应的验证码
             String title = getEmailTitle(action, email); // 先获取对应邮件标题
             String code = RandomUtil.randomString(4); // 再获取验证码
-            String content = "您本次操作的验证码为: " + code + "，两分钟内有效！"; // 设置邮件内容(复杂时可考虑封装)
+            String content = StringConst.EMAIL_CONTENT.replace("CODE", code); // 设置邮件内容(复杂时可考虑封装)
             MimeMessage mailMessage = javaMailSender.createMimeMessage();
             try {
-                MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true, "UTF-8");
+                MimeMessageHelper messageHelper = new MimeMessageHelper(mailMessage, true);
                 messageHelper.setFrom(from); // 设置发件人Email
                 messageHelper.setSubject(title); // 设置邮件主题
-                messageHelper.setText(content); // 设置邮件主题内容
                 messageHelper.setTo(email); // 设定收件人Email
+                messageHelper.setText(StringConst.EMAIL_CONTENT.replace("CODE",code),true); // 设置邮件主题内容
             } catch (MessagingException e) {
                 e.printStackTrace();
             }
