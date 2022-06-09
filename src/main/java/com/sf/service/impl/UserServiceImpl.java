@@ -175,7 +175,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 throw new ServiceException(Constants.CODE_400, "该账号已经被禁用！");
             }
             if (userIDTokenMap.containsKey(user.getId().toString())) { // 判断是否已登录
-                throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
+                String token = (String) userIDTokenMap.get(user.getId().toString());
+                // 判断是否有该token对应的用户信息(防止用户信息两小时过期后关系表中还存在该关系)
+                if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))){
+                    throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
+                }else { // 不存在该token对应的用户信息则将该关系删除
+                    userIDTokenMap.remove(user.getId().toString());
+                    stringRedisTemplate.delete(StringConst.USERID_TOKEN_REDIS_KEY);
+                    RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
+                    stringRedisTemplate.persist(StringConst.USERID_TOKEN_REDIS_KEY);
+                }
             }
             //将用户登录信息存入活跃用户表
             ActiveUser activeUser = new ActiveUser();
@@ -229,7 +238,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                     throw new ServiceException(Constants.CODE_400, "该账号已经被禁用！");
                 }
                 if (userIDTokenMap.containsKey(user.getId().toString())) { // 判断是否已登录
-                    throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
+                    String token = (String) userIDTokenMap.get(user.getId().toString());
+                    // 判断是否有该token对应的用户信息(防止用户信息两小时过期后关系表中还存在该关系)
+                    if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))){
+                        throw new ServiceException(Constants.CODE_400, "请不要重复登录！");
+                    }else { // 不存在该token对应的用户信息则将该关系删除
+                        userIDTokenMap.remove(user.getId().toString());
+                        stringRedisTemplate.delete(StringConst.USERID_TOKEN_REDIS_KEY);
+                        RedisUtils.mapToRedis(StringConst.USERID_TOKEN_REDIS_KEY, userIDTokenMap, Constants.USERID_TOKEN_REDIS_TIMEOUT);
+                        stringRedisTemplate.persist(StringConst.USERID_TOKEN_REDIS_KEY);
+                    }
                 }
 
                 //将用户登录信息存入活跃用户表
