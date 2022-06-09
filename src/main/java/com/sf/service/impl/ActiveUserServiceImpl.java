@@ -8,6 +8,7 @@ import com.sf.entity.ActiveUser;
 import com.sf.mapper.ActiveUserMapper;
 import com.sf.service.IActiveUserService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ import java.util.Collections;
  * @author leung
  * @since 2022-06-06
  */
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class ActiveUserServiceImpl extends ServiceImpl<ActiveUserMapper, ActiveUser> implements IActiveUserService {
 

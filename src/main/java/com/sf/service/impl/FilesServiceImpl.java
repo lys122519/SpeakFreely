@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -46,6 +47,7 @@ import java.util.List;
  * @author leung
  * @since 2022-05-30
  */
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class FilesServiceImpl extends ServiceImpl<FilesMapper, Files> implements IFilesService {
     private static final Logger log = LoggerFactory.getLogger(FilesServiceImpl.class);

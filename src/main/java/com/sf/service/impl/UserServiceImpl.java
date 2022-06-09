@@ -27,14 +27,13 @@ import com.sf.utils.RedisUtils;
 import com.sf.utils.TokenUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.mail.MessagingException;
@@ -53,28 +52,38 @@ import java.util.concurrent.TimeUnit;
  * @author leung
  * @since 2022-05-30
  */
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IUserService {
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
 
-    @Autowired
-    UserMapper userMapper;
+    @Resource
+    private UserMapper userMapper;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 邮件发送器
+     */
     @Resource
-    private JavaMailSender javaMailSender; // 邮件发送器
+    private JavaMailSender javaMailSender;
 
     @Resource
     private ActiveUserMapper activeUserMapper;
 
-
+    /**
+     * 邮件发送者
+     */
     @Value("${spring.mail.username}")
-    private String from; // 邮件发送者
+    private String from;
 
+    /**
+     * 用户状态禁用
+     * @param userID
+     */
     @Override
-    public void userDisabled(Integer userID) {// 用户状态禁用
+    public void userDisabled(Integer userID) {
         User user = userMapper.selectById(userID);
         if (user.getDisabled() == UserStateEnum.ENABLE) {
             // 1.修改数据库用户状态
@@ -97,8 +106,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    /**
+     * 解除用户禁用
+     * @param userID
+     */
     @Override
-    public void userEnable(Integer userID) {// 解除用户禁用
+    public void userEnable(Integer userID) {
         User user = userMapper.selectById(userID);
         if (user.getDisabled() == UserStateEnum.DISABLED) {
             user.setDisabled(UserStateEnum.ENABLE);// 将用户状态改为启用
@@ -108,8 +121,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    /**
+     * 登出(删除redis用户信息及token关系缓存)
+     * @param token
+     */
     @Override
-    public void userSignOut(String token) {// 登出(删除redis用户信息及token关系缓存)
+    public void userSignOut(String token) {
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(token))) {
             // 1.删除该用户ID与token关系缓存
             Map<Object, Object> userIDTokenMap = RedisUtils.mapFromRedis(StringConst.USERID_TOKEN_REDIS_KEY);
@@ -126,8 +143,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    /**
+     *  注销(删除redis用户缓存信息)
+     * @param userDTO
+     */
     @Override
-    public void userLogout(UserDTO userDTO) {// 注销(删除redis用户缓存信息)
+    public void userLogout(UserDTO userDTO) {
         // 通过token查询redis中的用户信息
         JSONObject userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
         setUserRedis(userDTO, userFromRedis);
@@ -151,8 +172,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    /**
+     * 用户登录
+     * @param username
+     * @param password
+     * @param userFace
+     * @return
+     */
     @Override
-    public UserDTO userLogin(String username, String password, String userFace) { // 用户登录
+    public UserDTO userLogin(String username, String password, String userFace) { //
         if (StrUtil.isNotBlank(username) && StrUtil.isNotBlank(password) && StrUtil.isBlank(userFace)) {
             return userPwdLogin(username, password);
         } else if (StrUtil.isBlank(username) && StrUtil.isBlank(password) && StrUtil.isNotBlank(userFace)) {
@@ -222,7 +250,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
             e.printStackTrace();
         }
         JSONObject jsonResult = new JSONObject(result); // 将匹配结果转为json对象
-        if (jsonResult.get("error_msg").equals("SUCCESS")) { // 检测匹配结果是否通过
+        if ("SUCCESS".equals(jsonResult.get("error_msg"))) { // 检测匹配结果是否通过
             jsonResult = new JSONObject(jsonResult.get("result")); // 获取检测结果中的result信息
             // 获取匹配到的用户信息列表
             List<JSONObject> userResult = (List<JSONObject>) jsonResult.get("user_list");
@@ -269,8 +297,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    /**
+     *  用户注册
+     * @param userDTO
+     * @return
+     */
     @Override
-    public UserDTO userRegister(UserDTO userDTO) { // 用户注册
+    public UserDTO userRegister(UserDTO userDTO) {
         String email = userDTO.getEmail();
         if (checkEmailCode(email, userDTO.getCode())) { // 验证邮箱与验证码信息
             if (checkUser(StringConst.USER_REGISTER, "username", userDTO.getUsername()) != null) {
@@ -290,8 +323,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
+    /**
+     * 用户信息修改操作
+     * @param userDTO
+     * @return
+     */
     @Override
-    public UserDTO userInfoModify(UserDTO userDTO) { // 用户信息修改操作
+    public UserDTO userInfoModify(UserDTO userDTO) {
         // 通过token查询redis中的用户信息
         JSONObject userFromRedis = RedisUtils.getUserRedis(userDTO.getToken());
         if (StrUtil.isNotBlank(userDTO.getCode())) {
@@ -312,13 +350,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*判断是否含有用户重要信息*/
+    /**
+     * 判断是否含有用户重要信息
+     * @param userDTO
+     * @return
+     */
     public Boolean isBaseInfo(UserDTO userDTO) {
         return userDTO.getUsername() == null && userDTO.getEmail() == null && userDTO.getId() == null &&
                 userDTO.getPassword() == null && userDTO.getCode() == null && userDTO.getRole() == null;
     }
 
-    /*进行用户信息修改实际操作*/
+    /**
+     * 进行用户信息修改实际操作
+     * @param userDTO
+     * @param userId
+     */
     public void infoModify(UserDTO userDTO, String userId) {
         if (userDTO.getId() != null) {
             throw new ServiceException(Constants.CODE_600, "用户ID一经注册不能被修改");
@@ -379,7 +425,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         } catch (Exception e) {
             e.printStackTrace();
         }
-        //log.info(result);
         JSONObject jsonResult = new JSONObject(result);
         if (jsonResult.get("error_msg").equals("SUCCESS")) { // 检测上传结果
             jsonResult = new JSONObject(jsonResult.get("result"));
@@ -397,7 +442,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return jsonResult;
     }
 
-    /*从人脸库删除人脸操作*/
+    /**
+     * 从人脸库删除人脸操作
+     * @param user_id
+     * @param faceToken
+     * @return
+     */
     public JSONObject faceDelete(String user_id, String faceToken) {
         // 请求url
         String url = "https://aip.baidubce.com/rest/2.0/face/v3/faceset/face/delete";
@@ -440,7 +490,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*邮件发送方法*/
+    /**
+     * 邮件发送方法
+     * @param action
+     * @param email
+     */
     @Override
     public void sendEmailCode(String action, String email) {
         if (!checkEmail(email)) { // 先检验邮箱格式
@@ -457,7 +511,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 messageHelper.setFrom(from); // 设置发件人Email
                 messageHelper.setSubject(title); // 设置邮件主题
                 messageHelper.setTo(email); // 设定收件人Email
-                messageHelper.setText(StringConst.EMAIL_CONTENT.replace("CODE",code),true); // 设置邮件主题内容
+                messageHelper.setText(StringConst.EMAIL_CONTENT.replace("CODE", code), true); // 设置邮件主题内容
             } catch (MessagingException e) {
                 e.printStackTrace();
             }
@@ -469,7 +523,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*根据操作标识及邮箱返回邮件标题*/
+    /**
+     * 根据操作标识及邮箱返回邮件标题
+     * @param action
+     * @param email
+     * @return
+     */
     public String getEmailTitle(String action, String email) {
         if (checkUser(StringConst.SEND_EMAIL, "email", email) == null) { // 用户为空才可创建邮件
             if (action.equals(StringConst.EMAIL_REGISTER)) { // 注册邮件操作
@@ -493,7 +552,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*根据传入参数动态创建一个邮件实例返回*/
+    /**
+     * 根据传入参数动态创建一个邮件实例返回
+     * @param email
+     * @param title
+     * @param content
+     * @return
+     */
     public SimpleMailMessage createMail(String email, String title, String content) {
         SimpleMailMessage mailMessage = new SimpleMailMessage(); // 实例化一个空邮件对象
         mailMessage.setFrom(from); // 定义邮件发送方
@@ -503,7 +568,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return mailMessage;
     }
 
-    /*为用户设置token*/
+    /**
+     * 为用户设置token
+     * @param userDTO
+     * @return
+     */
     public UserDTO setToken(UserDTO userDTO) {
         String token = userDTO.getToken(); // 获取token(未登录用户无token信息)
         if (token == null || token.equals("")) { // 检测用户对象是否存在token
@@ -529,7 +598,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         return userDTO;
     }
 
-    /*将用户信息中的id、username、email与用户的redis缓存同步*/
+    /**
+     * 将用户信息中的id、username、email与用户的redis缓存同步
+     * @param userDTO
+     * @param userFromRedis
+     */
     public void setUserRedis(UserDTO userDTO, JSONObject userFromRedis) {
         // 将用户信息拷贝到用户redis对象
         if (userDTO.getId() == null) { // id只能取不能更新
@@ -590,13 +663,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*邮箱格式验证方法*/
+    /**
+     * 邮箱格式验证方法
+     * @param email
+     * @return
+     */
     public Boolean checkEmail(String email) {
         String email_reg = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*$";
         return email.matches(email_reg); // 检验邮箱格式
     }
 
-    /* 用户检查方法，根据指定的字段和值返回对应操作所需的用户对象 */
+    /**
+     * 用户检查方法，根据指定的字段和值返回对应操作所需的用户对象
+     * @param action
+     * @param attr
+     * @param key
+     * @return
+     */
     public User checkUser(String action, String attr, String key) {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>(); // 实例化一个包装查询器
         queryWrapper.eq(attr, key); // 定义查询规则
@@ -624,7 +707,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         }
     }
 
-    /*验证邮箱与验证码的正确性*/
+    /**
+     * 验证邮箱与验证码的正确性
+     * @param email
+     * @param code
+     * @return
+     */
     public Boolean checkEmailCode(String email, String code) {
         if (!checkEmail(email)) { // 先检验邮箱格式
             throw new ServiceException(Constants.CODE_400, "邮箱格式有误"); // 格式不正确时抛出异常
