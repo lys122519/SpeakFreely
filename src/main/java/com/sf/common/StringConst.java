@@ -33,6 +33,11 @@ public interface StringConst {
     String ACTIVE_USER = "ACTIVE_USER";
 
     /**
+     * 管理员role
+     */
+    String USER_ADMIN = "ROLE_ADMIN";
+
+    /**
      * 百度AI智能云Token
      */
     String BAIDU_ACCESS_TOKEN = "24.e0cf8ab9a9b3ab0aec711f4c6b59105a.2592000.1657177329.282335-26370056";
@@ -62,6 +67,12 @@ public interface StringConst {
      * Map<文章id, Article转JsonObject再转String>
      */
     String ARTICLE_REDIS_KEY = "articleMapRedis";
+
+    /**
+     * 2.3 用户id与token对应关系Map
+     * Map<用户id, 用户token>
+     */
+    String USERID_TOKEN_REDIS_KEY = "userIDTokenMapRedis";
 
 
     /*3.一组对象以List缓存(实测同样的数据比Map方式占内存，且理论上字典结构比列表结构存取速度快)*/
