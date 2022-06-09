@@ -7,12 +7,10 @@ import com.sf.common.Result;
 import com.sf.common.StringConst;
 import com.sf.entity.Article;
 import com.sf.entity.Comment;
+import com.sf.entity.Report;
 import com.sf.entity.User;
 import com.sf.entity.dto.*;
-import com.sf.mapper.ArticleMapper;
-import com.sf.mapper.CommentMapper;
-import com.sf.mapper.FilesMapper;
-import com.sf.mapper.UserMapper;
+import com.sf.mapper.*;
 import com.sf.utils.RedisUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -51,6 +49,8 @@ public class DataController {
     @Resource
     private CommentMapper commentMapper;
 
+    @Resource
+    private ReportMapper reportMapper;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -177,20 +177,22 @@ public class DataController {
         return Result.success(resultList);
     }
 
-    @GetMapping("/articleAndCommentCount")
-    @ApiOperation(value = "文章和评论数量统计")
+    @GetMapping("/serviceCount")
+    @ApiOperation(value = "文章、评论、举报数量统计")
     public Result<List<DataDto>> findArticleCount() {
-        QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
-
-        Long articleCount = articleMapper.selectCount(queryWrapper);
-
+        //返回结果
         List<DataDto> resultList = new ArrayList<>();
+
+        //文章
+        QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
+        Long articleCount = articleMapper.selectCount(queryWrapper);
 
         DataDto articleDto = new DataDto();
         articleDto.setName("article");
         articleDto.setCount(Math.toIntExact(articleCount));
         resultList.add(articleDto);
 
+        //评论
         QueryWrapper<Comment> commentQueryWrapper = new QueryWrapper<>();
         Long commentCount = commentMapper.selectCount(commentQueryWrapper);
 
@@ -198,6 +200,15 @@ public class DataController {
         commentDto.setName("comment");
         commentDto.setCount(Math.toIntExact(commentCount));
         resultList.add(commentDto);
+
+        //举报
+        QueryWrapper<Report> reportQueryWrapper = new QueryWrapper<>();
+        Long reportResult = reportMapper.selectCount(reportQueryWrapper);
+
+        DataDto reportDto = new DataDto();
+        reportDto.setName("report");
+        reportDto.setCount(Math.toIntExact(reportResult));
+        resultList.add(reportDto);
 
         return Result.success(resultList);
     }

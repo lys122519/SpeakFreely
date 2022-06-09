@@ -44,7 +44,7 @@ public class SysData {
 
     }
 
-    public static SysDto getComputerSystem(SysDto sysDto) {
+    private static SysDto getComputerSystem(SysDto sysDto) {
         ComputerSystem computerSystem = hardware.getComputerSystem();
         //主机型号
         sysDto.setManufacturer(computerSystem.getManufacturer() + "-" + computerSystem.getModel());
@@ -52,7 +52,7 @@ public class SysData {
     }
 
 
-    public static SysDto getDiskInfo(SysDto sysDto) {
+    private static SysDto getDiskInfo(SysDto sysDto) {
         FileSystem fileSystem = operatingSystem.getFileSystem();
         List<OSFileStore> fsArray = fileSystem.getFileStores();
         for (OSFileStore fs : fsArray) {
@@ -79,7 +79,7 @@ public class SysData {
     }
 
 
-    public static SysDto getMemoryInfo(SysDto sysDto) {
+    private static SysDto getMemoryInfo(SysDto sysDto) {
         //内存相关
         GlobalMemory memory = OshiUtil.getMemory();
 
@@ -99,7 +99,7 @@ public class SysData {
     }
 
 
-    public static SysDto getOsInfo(SysDto sysDto) {
+    private static SysDto getOsInfo(SysDto sysDto) {
 
         //操作系统版本信息
         OperatingSystem.OSVersionInfo versionInfo = operatingSystem.getVersionInfo();
@@ -112,7 +112,7 @@ public class SysData {
         return sysDto;
     }
 
-    public static SysDto getCpuInfo(SysDto sysDto) {
+    private static SysDto getCpuInfo(SysDto sysDto) {
         //cpu相关
         CpuInfo cpuInfo = OshiUtil.getCpuInfo();
 

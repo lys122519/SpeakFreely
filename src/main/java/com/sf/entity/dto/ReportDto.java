@@ -49,6 +49,9 @@ public class ReportDto {
     @ApiModelProperty("是否删除")
     private Boolean deleted;
 
+    @ApiModelProperty("数量")
+    private Integer count;
+
     public Integer getUserId() {
         return userId;
     }
