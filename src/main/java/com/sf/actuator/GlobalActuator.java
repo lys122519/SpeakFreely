@@ -69,9 +69,8 @@ public class GlobalActuator {
 
         Signature signature = joinPoint.getSignature();
         String declaringName = signature.getDeclaringTypeName();
-        String[] splitResult = declaringName.split("\\.");
         String methodName = signature.getName();
-        String mapKey = splitResult[splitResult.length - 1] + methodName;
+        String mapKey = declaringName + methodName;
 
         // 执行成功则计数加一
         int increase = AtomicCounter.getInstance().increase();

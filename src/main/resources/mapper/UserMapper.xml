@@ -19,7 +19,7 @@
 
 
     <select id="selectUserSexCount" resultType="com.sf.entity.dto.UserDataDto">
-        SELECT count(*) as `count`, user.sex as name
+        SELECT count(*) as `count`, user.sex as sex
         from tb_user as user
         GROUP BY user.sex
         order by `count` desc
