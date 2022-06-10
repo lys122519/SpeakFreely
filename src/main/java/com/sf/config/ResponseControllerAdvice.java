@@ -48,12 +48,13 @@ public class ResponseControllerAdvice implements ResponseBodyAdvice<Object> {
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 //使用 jackson 将返回数据转换为 json
-                return objectMapper.writeValueAsString(result.success(body));
+                return objectMapper.writeValueAsString(Result.success(body));
             } catch (JsonProcessingException e) {
                 //这里会走统一异常处理
                 throw new RuntimeException("String类型返回值包装异常");
             }
         }
-        return result.success(body);
+
+        return Result.success(body);
     }
 }
